@@ -86,20 +86,44 @@
   /* ---------- Home tabs ---------- */
   var STONES = [[27, 11], [71, 30], [29, 50], [71, 69], [31, 89]];
 
+  function unitIndex(id) { return LQ.UNITS.findIndex(function (u) { return u.id === id; }); }
+  function firstOpenIndex(p, lang) {
+    for (var i = 0; i < LQ.UNITS.length; i++) if (!(p.stars[lang + ':' + LQ.UNITS[i].id] > 0)) return i;
+    return -1;
+  }
+  /* The world holding the learner's next unit, or the last world when all are done. */
+  function currentWorld(p, lang) {
+    var i = firstOpenIndex(p, lang);
+    var w = i < 0 ? null : LQ.worldOf(LQ.UNITS[i].id);
+    return (w || LQ.WORLDS[LQ.WORLDS.length - 1]).id;
+  }
+
+  function WorldBar(props) {
+    var p = props.profile, lang = p.lang;
+    return <div className="seg worlds" role="tablist" aria-label="Worlds">{LQ.WORLDS.map(function (w, n) {
+      var open = LQ.store.unitUnlocked(p, lang, unitIndex(w.units[0]));
+      var stars = w.units.reduce(function (a, u) { return a + (p.stars[lang + ':' + u] || 0); }, 0);
+      return <button key={w.id} role="tab" aria-selected={props.world === w.id} className={props.world === w.id ? 'on' : ''}
+        onClick={function () { props.onPick(w.id); }}>
+        {open ? null : <Icon name="lock" />}{w.title}<span className="world-stars">{stars}/{w.units.length * 3}</span></button>;
+    })}</div>;
+  }
+
   function MapTab(props) {
     var p = props.profile, lang = p.lang;
-    var firstOpen = -1;
-    LQ.UNITS.forEach(function (u, i) { if (firstOpen < 0 && !(p.stars[lang + ':' + u.id] > 0)) firstOpen = i; });
+    var world = LQ.WORLDS.filter(function (w) { return w.id === props.world; })[0] || LQ.WORLDS[0];
+    var firstOpen = firstOpenIndex(p, lang);
     var d = STONES.map(function (pt, i) { return (i ? 'L' : 'M') + pt[0] + ' ' + pt[1]; }).join(' ');
-    return <div className="map" aria-label="Lesson map">
+    return <div className="map" aria-label={world.title + ' map'}>
       <svg className="trail" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
         <path d={d} fill="none" stroke="#9fc4b6" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="0.1 12" vectorEffect="non-scaling-stroke" />
       </svg>
-      {LQ.UNITS.map(function (u, i) {
+      {world.units.map(function (uid, slot) {
+        var u = LQ.unitById(uid), i = unitIndex(uid);
         var stars = p.stars[lang + ':' + u.id] || 0;
         var open = LQ.store.unitUnlocked(p, lang, i);
         var cls = 'stone' + (stars > 0 ? ' done' : '') + (i === firstOpen ? ' next' : '') + (!open ? ' locked' : '');
-        return <button key={u.id} className={cls} style={{ left: STONES[i][0] + '%', top: STONES[i][1] + '%' }}
+        return <button key={u.id} className={cls} style={{ left: STONES[slot][0] + '%', top: STONES[slot][1] + '%' }}
           disabled={!open} aria-label={u.title + (open ? ', ' + stars + ' stars' : ', locked')}
           onClick={function () { props.onStart(u.id); }}>
           <span className="disc"><Pic svg={LQ.PICTURES[u.emblem]} /></span>
@@ -169,23 +193,25 @@
 
   function StickersTab(props) {
     var p = props.profile;
-    var got = 0, total = 0;
-    var rows = LQ.langList().map(function (L) {
-      return <div key={L.id} className="book-row">
-        <b>{L.name}</b>
-        <div className="book">{LQ.UNITS.map(function (u) {
-          total++;
-          var have = p.stickers.indexOf(L.id + ':' + u.id) >= 0;
-          if (have) got++;
-          return have ? <div key={u.id} className="slot pop" title={u.title}><Pic svg={LQ.PICTURES[u.emblem]} label={u.title} /></div>
-            : <div key={u.id} className="slot empty" aria-label={u.title + ' sticker not yet earned'}>?</div>;
-        })}</div>
-      </div>;
-    });
+    var langS = useState(p.lang), lang = langS[0], setLang = langS[1];
+    var total = LQ.langList().length * LQ.UNITS.length;
+    var got = p.stickers.filter(function (k) { return LQ.LANGUAGES[k.split(':')[0]] && LQ.unitById(k.split(':')[1]); }).length;
     return <div className="screen">
       <div className="row between"><h2>Sticker book</h2><span className="pill">{got} / {total}</span></div>
+      <div className="seg">{LQ.langList().map(function (L) {
+        return <button key={L.id} className={L.id === lang ? 'on' : ''} aria-pressed={L.id === lang} onClick={function () { setLang(L.id); }}>{L.name}</button>;
+      })}</div>
+      <div className="list grow" style={{ gap: 12 }}>{LQ.WORLDS.map(function (w) {
+        return <div key={w.id} className="book-row">
+          <b>{w.title}</b>
+          <div className="book">{w.units.map(function (uid) {
+            var u = LQ.unitById(uid), have = p.stickers.indexOf(lang + ':' + uid) >= 0;
+            return have ? <div key={uid} className="slot pop" title={u.title}><Pic svg={LQ.PICTURES[u.emblem]} label={u.title} /></div>
+              : <div key={uid} className="slot empty" aria-label={u.title + ' sticker not yet earned'}>?</div>;
+          })}</div>
+        </div>;
+      })}</div>
       <p className="small muted">Finish a lesson to earn its sticker.</p>
-      <div className="list grow" style={{ gap: 12 }}>{rows}</div>
     </div>;
   }
 
@@ -230,13 +256,16 @@
     var p = props.profile, s = props.state;
     var tabS = useState(props.tab || 'map'), tab = tabS[0], setTab = tabS[1];
     var addS = useState(false), adding = addS[0], setAdding = addS[1];
+    var worldS = useState(null), worldPick = worldS[0], setWorld = worldS[1];
+    var world = worldPick || currentWorld(p, p.lang);
     useEffect(function () { if (props.onTab) props.onTab(tab); }, [tab]);
     var streak = LQ.store.streak(p, LQ.store.dayKey());
     var backupDue = LQ.store.backupOverdue(s);
     var body;
     if (tab === 'map') body = <div className="screen">
-      <LangBar profile={p} onSwitch={props.onSwitchLang} onAddLang={function () { setAdding(true); }} />
-      <MapTab profile={p} onStart={props.onStartUnit} />
+      <LangBar profile={p} onSwitch={function (l) { setWorld(null); props.onSwitchLang(l); }} onAddLang={function () { setAdding(true); }} />
+      <WorldBar profile={p} world={world} onPick={setWorld} />
+      <MapTab profile={p} world={world} onStart={props.onStartUnit} />
     </div>;
     if (tab === 'review') body = <ReviewTab profile={p} custom={s.custom} onStart={props.onReview} />;
     if (tab === 'stickers') body = <StickersTab profile={p} />;
@@ -256,7 +285,7 @@
         return <button key={t[0]} className={'tab' + (tab === t[0] ? ' on' : '')} aria-current={tab === t[0] ? 'page' : null} onClick={function () { setTab(t[0]); }}>
           <Icon name={t[2]} />{t[1]}</button>;
       })}</nav>
-      {adding ? <AddLangSheet profile={p} onClose={function () { setAdding(false); }} onAdd={function (id) { setAdding(false); props.onAddLang(id); }} /> : null}
+      {adding ? <AddLangSheet profile={p} onClose={function () { setAdding(false); }} onAdd={function (id) { setAdding(false); setWorld(null); props.onAddLang(id); }} /> : null}
     </React.Fragment>;
   }
 

@@ -176,7 +176,13 @@ test('add Vietnamese from the map and switch languages; progress is kept per lan
 
 test('sticker book shows earned stickers', async () => {
   await click(tab('Stickers'), 'stickers tab');
-  eq($$('.slot:not(.empty)').length, 2); eq($$('.slot').length, 15);
+  eq($$('.slot').length, 10, 'two worlds of five for one language');
+  eq($$('.slot:not(.empty)').length, 1, 'Chinese sticker');
+  await click($$('.seg button').find(b => b.textContent === 'Vietnamese'), 'vi stickers');
+  eq($$('.slot:not(.empty)').length, 1, 'Vietnamese sticker');
+  await click($$('.seg button').find(b => b.textContent === 'Spanish'), 'es stickers');
+  eq($$('.slot:not(.empty)').length, 0, 'no Spanish yet');
+  assert(hasText('2 / 30'));
 });
 
 test('parent gate blocks a wrong answer and opens on the right one', async () => {
@@ -404,6 +410,27 @@ test('restoring a bad file on the welcome screen shows an error in the page', as
   Object.defineProperty(input, 'files', { value: [new win.File(['nope'], 'x.json')], configurable: true });
   input.dispatchEvent(new win.Event('change', { bubbles: true })); await tick(80);
   assert(hasText('That file is not a Lingo Quest backup.'));
+});
+
+test('worlds: finishing world 1 opens world 2 on the map, and either world can be viewed', async () => {
+  const s = state() || { schema: 1, profiles: [], custom: [], settings: { backupReminder: true, reminderDays: 30, lastBackup: null } };
+  const w = LQ.store.newProfile({ name: 'Wren', band: 'adult', langs: ['zh'] });
+  ['greetings', 'numbers', 'colours', 'family', 'food'].forEach(u => { w.stars['zh:' + u] = 3; });
+  s.profiles = [w];
+  boot(s); win.ReactDOM.createRoot($('#root')).render(win.React.createElement(LQ.App)); await tick(50);
+  assert($('.worlds button.on').textContent.includes('My world'), 'opens on world 2');
+  const titles = $$('.stone .label').map(l => l.textContent);
+  assert(titles[0].includes('Animals') && titles[4].includes('Weather'), titles.join('|'));
+  assert(!$$('.stone')[0].disabled && $$('.stone')[1].disabled, 'Animals open, Body locked');
+  await click($$('.worlds button').find(b => b.textContent.includes('First words')), 'world 1');
+  eq($$('.stone.done').length, 5); assert($('.worlds button.on').textContent.includes('15/15'));
+  await click($$('.worlds button').find(b => b.textContent.includes('My world')), 'world 2');
+  await click($$('.stone')[0], 'animals');
+  assert($('.learn-card'), 'animals lesson starts');
+  await playLesson({ lang: 'zh', unit: 'animals' });
+  await click(byText('Back to the map'), 'back');
+  assert($('.worlds button.on').textContent.includes('My world'), 'back on world 2');
+  assert(!$$('.stone')[1].disabled, 'Body unlocked');
 });
 
 run('ui').then(f => process.exit(f ? 1 : 0));

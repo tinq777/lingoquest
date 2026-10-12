@@ -248,3 +248,8 @@ rt.hide { visibility: hidden; }
 .boot-title { font-size: 34px; font-weight: 800; color: var(--ink); }
 .boot-msg { color: var(--ink-2); font-weight: 700; max-width: 320px; }
 .boot-msg.bad { color: var(--red-d); }
+
+/* World switcher above the map */
+.worlds button { display: inline-flex; align-items: center; justify-content: center; gap: 4px; font-size: 15px; }
+.worlds .ico { width: 16px; height: 16px; }
+.world-stars { font-size: 12px; font-weight: 700; opacity: .7; margin-left: 2px; }

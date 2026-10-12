@@ -1,6 +1,6 @@
 /* Lingo Quest service worker: works offline after the first visit.
    Bump VERSION whenever any file changes so phones pick up the update. */
-var VERSION = 'lingo-quest-v2';
+var VERSION = 'lingo-quest-v3';
 var FILES = [
   './', 'manifest.webmanifest', 'css/app.css',
   'vendor/react.production.min.js', 'vendor/react-dom.production.min.js', 'vendor/babel.min.js',

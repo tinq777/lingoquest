@@ -140,6 +140,125 @@
       '<ellipse cx="50" cy="88" rx="22" ry="3" fill="#000" opacity="0.08"/>', '#fdf6e3')
   };
 
+  /* ---------- World 2 ---------- */
+  var S = ' stroke="' + INK + '" stroke-width="2"';
+  /* A big face with one part ringed, for the Body unit. */
+  function bodyFace(ring, extra) {
+    return svg('<path d="M28 44 Q28 18 50 18 Q72 18 72 44 Q64 30 50 32 Q36 30 28 44 Z" fill="#3b2a20"/>' +
+      '<ellipse cx="25" cy="54" rx="6" ry="9" fill="' + SKIN + '"' + S + '/><ellipse cx="75" cy="54" rx="6" ry="9" fill="' + SKIN + '"' + S + '/>' +
+      '<ellipse cx="50" cy="56" rx="25" ry="29" fill="' + SKIN + '"' + S + '/>' +
+      '<path d="M27 46 Q30 26 50 26 Q70 26 73 46 Q64 36 50 37 Q36 36 27 46 Z" fill="#3b2a20"/>' +
+      eyes(50, 52, 10, 3) + '<path d="M50 56 q-3 7 0 9" fill="none" stroke="#c9946b" stroke-width="2" stroke-linecap="round"/>' + smile(50, 70, 7) +
+      (extra || '') + ring, '#fff8e7');
+  }
+  function ringAt(cx, cy, rx, ry) {
+    return '<ellipse cx="' + cx + '" cy="' + cy + '" rx="' + rx + '" ry="' + ry + '" fill="none" stroke="#ef476f" stroke-width="3.5" stroke-dasharray="6 4"/>';
+  }
+  function thermo(fill, level) {
+    return '<rect x="64" y="18" width="14" height="56" rx="7" fill="#fff"' + S + '/><circle cx="71" cy="78" r="11" fill="' + fill + '"' + S + '/>' +
+      '<rect x="68" y="' + (74 - level) + '" width="6" height="' + level + '" rx="3" fill="' + fill + '"/>';
+  }
+  function cloudShape(x, y, s, fill) {
+    return '<g transform="translate(' + x + ' ' + y + ') scale(' + s + ')"><path d="M14 40 Q2 40 2 30 Q2 20 14 20 Q16 6 32 6 Q46 6 50 18 Q64 16 66 30 Q68 40 56 40 Z" fill="' + fill + '"' + S + '/></g>';
+  }
+
+  Object.assign(P, {
+    dog: svg('<ellipse cx="22" cy="44" rx="11" ry="22" fill="#8d5a3b"' + S + ' transform="rotate(15 22 44)"/><ellipse cx="78" cy="44" rx="11" ry="22" fill="#8d5a3b"' + S + ' transform="rotate(-15 78 44)"/>' +
+      '<circle cx="50" cy="52" r="28" fill="#d9a066"' + S + '/><ellipse cx="50" cy="66" rx="15" ry="11" fill="#f3d6b0"/>' + eyes(50, 46, 11, 3.5) +
+      '<ellipse cx="50" cy="60" rx="6" ry="4.5" fill="' + INK + '"/><path d="M50 64 v4" stroke="' + INK + '" stroke-width="2"/>' + smile(50, 69, 6) +
+      '<path d="M47 74 q3 8 6 0" fill="#ef476f"/>', '#fdf0e6'),
+    bird: svg('<path d="M18 50 Q24 34 40 40 L30 54 Z" fill="#2b8ad6"' + S + '/><ellipse cx="52" cy="54" rx="26" ry="22" fill="#4ea8de"' + S + '/>' +
+      '<path d="M40 56 Q52 74 66 58 Q56 66 40 56 Z" fill="#2b8ad6"/><circle cx="64" cy="48" r="3.5" fill="' + INK + '"/>' +
+      '<path d="M77 50 L90 54 L77 58 Z" fill="#f4a259"' + S + ' stroke-linejoin="round"/><path d="M46 76 v10 M56 76 v10 M42 86 h8 M52 86 h8" stroke="#f4a259" stroke-width="3" stroke-linecap="round"/>', '#e8f4ff'),
+    fish: svg('<path d="M70 50 L90 34 L88 66 Z" fill="#ff8c1a"' + S + ' stroke-linejoin="round"/><ellipse cx="46" cy="50" rx="32" ry="20" fill="#ffa94d"' + S + '/>' +
+      '<path d="M44 34 Q50 44 44 66" fill="none" stroke="#e07a10" stroke-width="2"/><circle cx="28" cy="46" r="4" fill="' + INK + '"/>' +
+      '<path d="M20 56 q4 3 8 0" fill="none" stroke="' + INK + '" stroke-width="2" stroke-linecap="round"/><circle cx="20" cy="26" r="3" fill="none" stroke="#5bc0eb" stroke-width="2"/><circle cx="12" cy="16" r="4" fill="none" stroke="#5bc0eb" stroke-width="2"/>', '#e3f4fb'),
+    rabbit: svg('<ellipse cx="38" cy="26" rx="8" ry="22" fill="#f4f4f6"' + S + '/><ellipse cx="62" cy="26" rx="8" ry="22" fill="#f4f4f6"' + S + '/>' +
+      '<ellipse cx="38" cy="28" rx="3.5" ry="15" fill="#ffc2d4"/><ellipse cx="62" cy="28" rx="3.5" ry="15" fill="#ffc2d4"/>' +
+      '<circle cx="50" cy="62" r="26" fill="#f4f4f6"' + S + '/>' + eyes(50, 58, 10, 3.5) + '<path d="M46 66 L54 66 L50 71 Z" fill="#ef476f"/>' +
+      '<path d="M50 71 v4 M44 77 q6 4 12 0" fill="none" stroke="' + INK + '" stroke-width="2" stroke-linecap="round"/><circle cx="36" cy="70" r="3" fill="#ffc2d4"/><circle cx="64" cy="70" r="3" fill="#ffc2d4"/>', '#f3efff'),
+    horse: svg('<path d="M34 22 L40 8 L46 22 Z M54 22 L60 8 L66 22 Z" fill="#8d5a3b"' + S + ' stroke-linejoin="round"/>' +
+      '<path d="M32 26 Q50 14 68 26 L66 70 Q64 90 50 90 Q36 90 34 70 Z" fill="#a8693f"' + S + '/>' +
+      '<path d="M44 16 Q50 30 46 44 Q54 32 56 18 Z" fill="#3b2a20"/><ellipse cx="50" cy="78" rx="14" ry="11" fill="#d9a066"/>' + eyes(50, 44, 12, 3.5) +
+      '<circle cx="45" cy="78" r="2.5" fill="' + INK + '"/><circle cx="55" cy="78" r="2.5" fill="' + INK + '"/>', '#fdf0e6'),
+    cow: svg('<path d="M22 30 Q14 22 16 14 Q24 18 28 26 Z M78 30 Q86 22 84 14 Q76 18 72 26 Z" fill="#e7e2d6"' + S + '/>' +
+      '<ellipse cx="18" cy="40" rx="10" ry="6" fill="#fff"' + S + '/><ellipse cx="82" cy="40" rx="10" ry="6" fill="#fff"' + S + '/>' +
+      '<ellipse cx="50" cy="50" rx="27" ry="30" fill="#fff"' + S + '/><path d="M30 32 Q40 26 44 38 Q36 46 28 42 Z" fill="' + INK + '"/>' +
+      '<ellipse cx="50" cy="70" rx="20" ry="13" fill="#ffc2d4"' + S + '/>' + eyes(50, 48, 11, 3.5) +
+      '<ellipse cx="43" cy="70" rx="3" ry="4" fill="#c97a8f"/><ellipse cx="57" cy="70" rx="3" ry="4" fill="#c97a8f"/>', '#eafaf1'),
+    pig: svg('<path d="M24 34 L22 16 L40 26 Z M76 34 L78 16 L60 26 Z" fill="#ff9fbf"' + S + ' stroke-linejoin="round"/>' +
+      '<circle cx="50" cy="54" r="30" fill="#ffb8cf"' + S + '/>' + eyes(50, 46, 12, 3.5) +
+      '<ellipse cx="50" cy="62" rx="13" ry="9" fill="#ff8fb3"' + S + '/><ellipse cx="45" cy="62" rx="2.5" ry="3.5" fill="#b34d72"/><ellipse cx="55" cy="62" rx="2.5" ry="3.5" fill="#b34d72"/>' +
+      smile(50, 75, 6), '#fff0f3'),
+
+    head: bodyFace(ringAt(50, 50, 33, 38)),
+    eye: bodyFace(ringAt(60, 52, 9, 8)),
+    ear: bodyFace(ringAt(75, 54, 10, 13)),
+    nose: bodyFace(ringAt(50, 61, 8, 8)),
+    mouth: bodyFace(ringAt(50, 73, 12, 7)),
+    hair: bodyFace(ringAt(50, 30, 26, 13)),
+    hand: svg(hand(50, 58, 0) .replace('translate(50 58)', 'translate(50 58) scale(1.7)'), '#fff8e7'),
+    foot: svg('<path d="M40 36 Q60 32 64 50 Q68 66 62 80 Q56 92 44 90 Q32 88 34 74 Q36 62 32 50 Q30 38 40 36 Z" fill="' + SKIN + '" stroke="#c9946b" stroke-width="2"/>' +
+      '<g fill="' + SKIN + '" stroke="#c9946b" stroke-width="2"><ellipse cx="36" cy="24" rx="7" ry="8"/><ellipse cx="48" cy="18" rx="5" ry="6"/><ellipse cx="58" cy="19" rx="4.5" ry="5.5"/><ellipse cx="66" cy="24" rx="4" ry="5"/><ellipse cx="72" cy="32" rx="3.5" ry="4.5"/></g>', '#fff8e7'),
+
+    house: svg('<path d="M14 48 L50 18 L86 48 Z" fill="#ef476f"' + S + ' stroke-linejoin="round"/><rect x="22" y="46" width="56" height="40" fill="#ffd166"' + S + '/>' +
+      '<rect x="42" y="60" width="16" height="26" fill="#8d5a3b"' + S + '/><rect x="27" y="54" width="12" height="11" fill="#cdeafe"' + S + '/><rect x="61" y="54" width="12" height="11" fill="#cdeafe"' + S + '/>' +
+      '<rect x="64" y="24" width="8" height="14" fill="#8d5a3b"' + S + '/>', '#e8f4ff'),
+    door: svg('<rect x="28" y="12" width="44" height="78" rx="4" fill="#a8693f"' + S + '/><rect x="34" y="18" width="32" height="28" rx="3" fill="none" stroke="#7a4a2a" stroke-width="2"/>' +
+      '<rect x="34" y="52" width="32" height="32" rx="3" fill="none" stroke="#7a4a2a" stroke-width="2"/><circle cx="64" cy="50" r="3.5" fill="#ffd166"' + S + '/>', '#fdf0e6'),
+    window: svg('<rect x="18" y="16" width="64" height="66" rx="4" fill="#cdeafe"' + S + '/><path d="M50 16 V82 M18 49 H82" stroke="' + INK + '" stroke-width="3"/>' +
+      '<circle cx="32" cy="32" r="7" fill="#ffd166"/><path d="M58 70 Q64 60 72 70" fill="#6cc070"/><rect x="12" y="80" width="76" height="8" rx="3" fill="#a8693f"' + S + '/>' +
+      '<path d="M22 20 l10 0 M22 24 l6 0" stroke="#fff" stroke-width="2"/>', '#f4f6fb'),
+    bed: svg('<rect x="12" y="36" width="10" height="50" rx="3" fill="#8d5a3b"' + S + '/><rect x="78" y="52" width="10" height="34" rx="3" fill="#8d5a3b"' + S + '/>' +
+      '<rect x="18" y="56" width="66" height="16" rx="4" fill="#fff"' + S + '/><rect x="38" y="48" width="48" height="16" rx="5" fill="#4ea8de"' + S + '/>' +
+      '<ellipse cx="30" cy="51" rx="9" ry="6" fill="#fff"' + S + '/><path d="M60 26 q4 -4 8 0 M70 18 q3 -3 6 0" fill="none" stroke="#9b7ede" stroke-width="2.5" stroke-linecap="round"/>' +
+      '<text x="80" y="30" font-family="system-ui,sans-serif" font-size="12" font-weight="800" fill="#9b7ede">z</text>', '#f3efff'),
+    table: svg('<rect x="12" y="38" width="76" height="10" rx="3" fill="#c98a4b"' + S + '/><rect x="18" y="48" width="8" height="38" fill="#a8693f"' + S + '/><rect x="74" y="48" width="8" height="38" fill="#a8693f"' + S + '/>' +
+      '<path d="M40 38 Q38 26 44 24 H56 Q62 26 60 38" fill="#ef476f"' + S + '/><path d="M46 24 Q44 14 50 12 Q56 14 54 24" fill="#2bb673"/>', '#fdf0e6'),
+    chair: svg('<rect x="30" y="14" width="40" height="38" rx="5" fill="#2bb673"' + S + '/><rect x="24" y="50" width="52" height="10" rx="3" fill="#25a065"' + S + '/>' +
+      '<rect x="28" y="60" width="7" height="28" fill="#1f8a56"' + S + '/><rect x="65" y="60" width="7" height="28" fill="#1f8a56"' + S + '/><path d="M38 24 h24 M38 32 h24 M38 40 h24" stroke="#1f8a56" stroke-width="2"/>', '#eafaf1'),
+    book: svg('<path d="M14 26 Q32 18 50 26 V84 Q32 76 14 84 Z" fill="#fff"' + S + '/><path d="M86 26 Q68 18 50 26 V84 Q68 76 86 84 Z" fill="#fff"' + S + '/>' +
+      '<path d="M20 38 Q32 33 44 38 M20 48 Q32 43 44 48 M20 58 Q32 53 44 58 M56 38 Q68 33 80 38 M56 48 Q68 43 80 48" fill="none" stroke="#9aa3b5" stroke-width="2"/>' +
+      '<path d="M10 30 V88 Q30 80 50 88 Q70 80 90 88 V30" fill="none" stroke="#ef476f" stroke-width="3"/>', '#fff0f3'),
+    tv: svg('<rect x="12" y="24" width="76" height="52" rx="8" fill="' + INK + '"/><rect x="18" y="30" width="64" height="40" rx="4" fill="#4ea8de"/>' +
+      '<circle cx="36" cy="46" r="7" fill="#ffd166"/><path d="M18 70 L40 52 L56 64 L66 56 L82 70 Z" fill="#6cc070"/><path d="M38 24 L28 10 M62 24 L72 10" stroke="' + INK + '" stroke-width="2.5" stroke-linecap="round"/>' +
+      '<rect x="36" y="78" width="28" height="6" rx="3" fill="' + INK + '"/>', '#f4f6fb'),
+
+    shirt: svg('<path d="M36 16 L22 22 L10 40 L24 48 L28 40 V86 H72 V40 L76 48 L90 40 L78 22 L64 16 Q50 28 36 16 Z" fill="#4ea8de"' + S + ' stroke-linejoin="round"/>' +
+      '<path d="M50 26 V86" stroke="#2b7fc0" stroke-width="2"/><circle cx="50" cy="40" r="2" fill="#fff"/><circle cx="50" cy="54" r="2" fill="#fff"/><circle cx="50" cy="68" r="2" fill="#fff"/>' +
+      '<path d="M36 16 L44 30 L50 26 L56 30 L64 16" fill="#fff"' + S + ' stroke-linejoin="round"/>', '#e8f4ff'),
+    trousers: svg('<path d="M28 12 H72 L80 88 H56 L50 42 L44 88 H20 Z" fill="#3e5c99"' + S + ' stroke-linejoin="round"/><rect x="28" y="12" width="44" height="9" fill="#2f4a80"' + S + '/>' +
+      '<path d="M40 22 V32 M60 22 V32" stroke="#2f4a80" stroke-width="2"/>', '#eef2fb'),
+    shoes: svg('<path d="M10 62 Q10 48 20 46 L30 44 Q36 54 46 52 L48 62 Q48 72 40 72 H14 Q10 72 10 66 Z" fill="#ef476f"' + S + '/>' +
+      '<path d="M52 66 Q52 52 62 50 L72 48 Q78 58 88 56 L90 66 Q90 76 82 76 H56 Q52 76 52 70 Z" fill="#ef476f"' + S + '/>' +
+      '<path d="M10 66 H48 M52 70 H90" stroke="#fff" stroke-width="3"/><path d="M24 50 l4 4 M28 48 l4 4 M66 54 l4 4 M70 52 l4 4" stroke="#fff" stroke-width="2"/>', '#fff0f3'),
+    socks: svg('<path d="M22 14 H40 V54 L48 66 Q52 76 42 80 L26 84 Q14 84 16 72 L22 58 Z" fill="#ffd166"' + S + ' stroke-linejoin="round"/>' +
+      '<path d="M58 18 H76 V58 L84 70 Q88 80 78 84 L62 88 Q50 88 52 76 L58 62 Z" fill="#9b7ede"' + S + ' stroke-linejoin="round"/>' +
+      '<path d="M22 22 H40 M22 28 H40 M58 26 H76 M58 32 H76" stroke="#fff" stroke-width="3"/>', '#fffbe6'),
+    hat: svg('<ellipse cx="50" cy="66" rx="40" ry="12" fill="#e2a35f"' + S + '/><path d="M28 64 Q26 30 50 28 Q74 30 72 64 Z" fill="#e2a35f"' + S + '/>' +
+      '<path d="M28 56 Q50 62 72 56 L72 64 Q50 70 28 64 Z" fill="#ef476f"/>', '#fdf6e3'),
+    dress: svg('<path d="M38 12 L34 34 Q36 40 40 42 L20 88 H80 L60 42 Q64 40 66 34 L62 12 Q56 20 50 20 Q44 20 38 12 Z" fill="#ff8fc7"' + S + ' stroke-linejoin="round"/>' +
+      '<path d="M40 42 H60" stroke="' + INK + '" stroke-width="2"/><circle cx="36" cy="64" r="3" fill="#fff"/><circle cx="54" cy="58" r="3" fill="#fff"/><circle cx="64" cy="74" r="3" fill="#fff"/><circle cx="44" cy="78" r="3" fill="#fff"/>', '#fff0f3'),
+    coat: svg('<path d="M34 12 L18 22 L12 70 L24 72 L28 44 V90 H72 V44 L76 72 L88 70 L82 22 L66 12 L50 30 Z" fill="#2bb673"' + S + ' stroke-linejoin="round"/>' +
+      '<path d="M50 30 V90" stroke="' + INK + '" stroke-width="2"/><path d="M34 12 L42 34 L50 30 L58 34 L66 12" fill="#25a065"' + S + ' stroke-linejoin="round"/>' +
+      '<circle cx="56" cy="46" r="2.5" fill="' + INK + '"/><circle cx="56" cy="60" r="2.5" fill="' + INK + '"/><circle cx="56" cy="74" r="2.5" fill="' + INK + '"/><rect x="32" y="62" width="12" height="9" rx="2" fill="none"' + S + '/>', '#eafaf1'),
+    glasses: svg('<circle cx="30" cy="52" r="16" fill="#e3f4fb" stroke="' + INK + '" stroke-width="4"/><circle cx="70" cy="52" r="16" fill="#e3f4fb" stroke="' + INK + '" stroke-width="4"/>' +
+      '<path d="M46 50 Q50 44 54 50 M14 48 L6 40 M86 48 L94 40" fill="none" stroke="' + INK + '" stroke-width="4" stroke-linecap="round"/><path d="M22 46 l6 -4 M62 46 l6 -4" stroke="#fff" stroke-width="3" stroke-linecap="round"/>', '#f4f6fb'),
+
+    sun: svg('<g stroke="#f4a259" stroke-width="4" stroke-linecap="round"><path d="M50 8 v12 M50 80 v12 M8 50 h12 M80 50 h12 M20 20 l9 9 M71 71 l9 9 M80 20 l-9 9 M29 71 l-9 9"/></g>' +
+      '<circle cx="50" cy="50" r="24" fill="#ffd166" stroke="#f4a259" stroke-width="3"/>' + eyes(50, 46, 8, 2.6) + smile(50, 56, 7), '#e8f4ff'),
+    rain: svg(cloudShape(16, 10, 1.05, '#c5ccd8') + '<g fill="#4ea8de"><path d="M30 62 q-4 8 0 10 q4 -2 0 -10 Z"/><path d="M50 70 q-4 8 0 10 q4 -2 0 -10 Z"/><path d="M70 62 q-4 8 0 10 q4 -2 0 -10 Z"/><path d="M40 82 q-3 6 0 8 q3 -2 0 -8 Z"/><path d="M60 82 q-3 6 0 8 q3 -2 0 -8 Z"/></g>', '#eef2fb'),
+    wind: svg('<g fill="none" stroke="#4ea8de" stroke-width="5" stroke-linecap="round"><path d="M10 38 H62 Q74 38 74 28 Q74 18 64 20"/><path d="M10 54 H78 Q90 54 90 64 Q90 74 80 72"/><path d="M18 70 H50 Q58 70 58 78"/></g>' +
+      '<path d="M66 40 Q78 34 82 44 Q72 50 66 40 Z" fill="#2bb673"/>', '#eef8ff'),
+    snow: svg('<g stroke="#4ea8de" stroke-width="5" stroke-linecap="round"><path d="M50 14 V86 M19 32 L81 68 M19 68 L81 32"/>' +
+      '<path d="M42 20 L50 28 L58 20 M42 80 L50 72 L58 80 M20 44 L30 40 L27 30 M80 56 L70 60 L73 70 M20 56 L30 60 L27 70 M80 44 L70 40 L73 30" fill="none" stroke-width="3.5"/></g>', '#eef8ff'),
+    cloud: svg(cloudShape(12, 22, 1.15, '#ffffff') + eyes(46, 54, 8, 2.6) + smile(46, 62, 5), '#cdeafe'),
+    hot: svg('<circle cx="34" cy="38" r="18" fill="#ffd166" stroke="#f4a259" stroke-width="3"/><g stroke="#f4a259" stroke-width="3" stroke-linecap="round"><path d="M34 10 v6 M34 60 v6 M6 38 h6 M56 38 h6 M14 18 l4 4 M50 54 l4 4 M54 18 l-4 4 M18 54 l-4 4"/></g>' + thermo('#e63946', 40), '#fff0e6'),
+    cold: svg('<g stroke="#4ea8de" stroke-width="4" stroke-linecap="round"><path d="M32 18 V62 M13 29 L51 51 M13 51 L51 29"/></g>' + thermo('#4ea8de', 10), '#eef8ff'),
+    rainbow: svg('<g fill="none" stroke-width="7"><path d="M12 76 A38 38 0 0 1 88 76" stroke="#e63946"/><path d="M19 76 A31 31 0 0 1 81 76" stroke="#ff8c1a"/><path d="M26 76 A24 24 0 0 1 74 76" stroke="#ffd23f"/><path d="M33 76 A17 17 0 0 1 67 76" stroke="#2bb673"/><path d="M40 76 A10 10 0 0 1 60 76" stroke="#4ea8de"/></g>' +
+      cloudShape(4, 62, 0.45, '#fff') + cloudShape(66, 62, 0.45, '#fff'), '#e8f4ff')
+  });
+
   /* Avatars for the profile picker. */
   function animal(body) { return svg(body); }
   var AVATARS = {
@@ -164,6 +283,9 @@
       '<circle cx="36" cy="46" r="5" fill="#2b2d42"/><circle cx="64" cy="46" r="5" fill="#2b2d42"/><path d="M45 58 L55 58 L50 68 Z" fill="#ffd166" stroke="#2b2d42" stroke-width="1.5"/>' +
       '<ellipse cx="50" cy="80" rx="18" ry="9" fill="#b9a7ec"/>')
   };
+
+  // The cat card reuses the cat avatar drawing on a card background.
+  P.cat = AVATARS.cat.replace('aria-hidden="true">', 'aria-hidden="true"><rect width="100" height="100" rx="18" fill="#fff4e6"/>');
 
   /* Picture for a custom word with no illustration: a card with its English word. */
   function customPicture(en) {

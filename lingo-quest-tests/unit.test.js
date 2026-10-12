@@ -16,10 +16,16 @@ const LANGS = Object.keys(LQ.LANGUAGES);
 test('three languages registered, Chinese is the default', () => {
   eq(LANGS.sort().join(), 'es,vi,zh'); eq(LQ.defaultLang(), 'zh'); eq(LQ.langList()[0].id, 'zh');
 });
-test('5 units with 8 unique concepts each, unique ids across units', () => {
-  eq(LQ.UNITS.length, 5);
+test('10 units with 8 unique concepts each, unique ids across units', () => {
+  eq(LQ.UNITS.length, 10);
   const ids = new Set();
   LQ.UNITS.forEach(u => { eq(u.concepts.length, 8, u.id); u.concepts.forEach(c => { assert(!ids.has(c.id), 'dup ' + c.id); ids.add(c.id); }); });
+});
+test('every unit sits in exactly one world of five, in map order', () => {
+  const seen = [];
+  LQ.WORLDS.forEach(w => { eq(w.units.length, 5, w.id); w.units.forEach(u => { assert(LQ.unitById(u), 'unknown unit ' + u); seen.push(u); }); });
+  eq(seen.join(), LQ.UNITS.map(u => u.id).join(), 'worlds follow unit order');
+  eq(LQ.worldOf('animals').id, 'w2');
 });
 test('every concept has a word in every language', () => {
   LANGS.forEach(l => LQ.UNITS.forEach(u => u.concepts.forEach(c => assert(LQ.LANGUAGES[l].words[c.id] && LQ.LANGUAGES[l].words[c.id].t, l + ':' + c.id))));
@@ -50,12 +56,13 @@ test('Spanish: nouns carry gender matching the article (el agua is feminine)', (
     if (!art) { assert(!w.g, id + ' gender without article'); return; }
     assert(w.g, id + ' missing gender');
     if (id === 'water') { eq(w.g, 'f'); return; }
+    if (id === 'hand') { eq(w.t, 'la mano'); eq(w.g, 'f'); return; }
     eq(w.g, /^(la|las)$/.test(art) ? 'f' : 'm', id);
   });
 });
 test('Vietnamese: Northern forms used (bố, quả)', () => {
   const v = LQ.LANGUAGES.vi.words;
-  eq(v.dad.t, 'bố'); assert(/^quả /.test(v.apple.t)); assert(/^quả /.test(v.banana.t)); eq(LQ.LANGUAGES.vi.variant, 'Northern (Hanoi)');
+  eq(v.dad.t, 'bố'); eq(v.pig.t, 'con lợn'); eq(v.hat.t, 'mũ'); eq(v.socks.t, 'tất'); assert(/^quả /.test(v.apple.t)); assert(/^quả /.test(v.banana.t)); eq(LQ.LANGUAGES.vi.variant, 'Northern (Hanoi)');
 });
 test('tips and 3-line dialogues for every unit and language', () => {
   LANGS.forEach(l => LQ.UNITS.forEach(u => {
@@ -68,7 +75,7 @@ test('tips and 3-line dialogues for every unit and language', () => {
   }));
 });
 test('simple characters for early readers have hints', () => {
-  ['one', 'two', 'three', 'eight'].forEach(id => assert(LQ.LANGUAGES.zh.words[id].hint, id));
+  ['one', 'two', 'three', 'eight', 'hand', 'door', 'rain'].forEach(id => assert(LQ.LANGUAGES.zh.words[id].hint, id));
 });
 
 /* ---------- Tones ---------- */
@@ -191,6 +198,11 @@ test('family streak only counts days when everyone practised', () => {
 });
 test('streaks cross month boundaries', () => {
   const p = mk('A', { days: ['2026-09-30', '2026-10-01'] }); eq(S.streak(p, '2026-10-01'), 2);
+});
+test('the first unit of world 2 opens only after the last unit of world 1', () => {
+  const p = mk('A', { stars: { 'zh:greetings': 1, 'zh:numbers': 1, 'zh:colours': 1, 'zh:family': 1 } });
+  assert(!S.unitUnlocked(p, 'zh', 5));
+  p.stars['zh:food'] = 2; assert(S.unitUnlocked(p, 'zh', 5)); assert(!S.unitUnlocked(p, 'zh', 6));
 });
 test('units unlock in order per language', () => {
   const p = mk('A', { stars: { 'zh:greetings': 2 } });
