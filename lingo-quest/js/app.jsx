@@ -295,8 +295,25 @@
     </div>;
   }
 
+  /* If a screen crashes, say so instead of leaving a blank page. */
+  class Guard extends React.Component {
+    constructor(p) { super(p); this.state = { err: null }; }
+    static getDerivedStateFromError(err) { return { err: err }; }
+    componentDidCatch(err, info) { try { console.error(err, info); } catch (e) { /* ignore */ } }
+    render() {
+      if (!this.state.err) return this.props.children;
+      return <div className="app"><div className="screen center">
+        <h2>Something went wrong</h2>
+        <p className="muted">Your progress is saved. Reload to carry on.</p>
+        <div className="notice bad small" style={{ wordBreak: 'break-word' }}>{String(this.state.err && this.state.err.message || this.state.err)}</div>
+        <button className="btn primary block" onClick={function () { location.reload(); }}>Reload</button>
+      </div></div>;
+    }
+  }
+
   LQ.App = App;
+  LQ.Guard = Guard;
   LQ.buildReview = buildReview;
   var rootEl = document.getElementById('root');
-  if (rootEl && !LQ.noAutoMount) ReactDOM.createRoot(rootEl).render(<App />);
+  if (rootEl && !LQ.noAutoMount) ReactDOM.createRoot(rootEl).render(<Guard><App /></Guard>);
 })(window.LQ = window.LQ || {});
