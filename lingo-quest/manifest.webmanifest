@@ -1,7 +1,7 @@
 {
   "name": "Lingo Quest",
   "short_name": "Lingo Quest",
-  "description": "Learn Chinese, Spanish and Vietnamese together as a family.",
+  "description": "Learn Chinese, Spanish, Vietnamese and Arabic together as a family.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

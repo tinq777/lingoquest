@@ -602,6 +602,167 @@
           { s: 'a', t: 'Mang ô đi con!', en: 'Take an umbrella!' }
         ]
       }
+    },
+
+    ar: {
+      id: 'ar', order: 4, name: 'Arabic', native: 'العربية', flagWord: 'مرحبا',
+      voice: 'ar-SA', variant: 'Modern Standard Arabic', tones: null, rtl: true,
+      words: {
+        hello: { t: 'مرحبا', r: 'marhaban' },
+        goodbye: { t: 'مع السلامة', r: 'ma\'a as-salama' },
+        thanks: { t: 'شكرا', r: 'shukran' },
+        yes: { t: 'نعم', r: 'na\'am' },
+        no: { t: 'لا', r: 'la' },
+        please: { t: 'من فضلك', r: 'min fadlik' },
+        sorry: { t: 'آسف', r: 'asif' },
+        morning: { t: 'صباح الخير', r: 'sabah al-khayr' },
+        one: { t: 'واحد', r: 'wahid' },
+        two: { t: 'اثنان', r: 'ithnan' },
+        three: { t: 'ثلاثة', r: 'thalatha' },
+        four: { t: 'أربعة', r: 'arba\'a' },
+        five: { t: 'خمسة', r: 'khamsa' },
+        six: { t: 'ستة', r: 'sitta' },
+        seven: { t: 'سبعة', r: 'sab\'a' },
+        eight: { t: 'ثمانية', r: 'thamaniya' },
+        red: { t: 'أحمر', r: 'ahmar' },
+        blue: { t: 'أزرق', r: 'azraq' },
+        green: { t: 'أخضر', r: 'akhdar' },
+        yellow: { t: 'أصفر', r: 'asfar' },
+        black: { t: 'أسود', r: 'aswad' },
+        white: { t: 'أبيض', r: 'abyad' },
+        pink: { t: 'وردي', r: 'wardi' },
+        orange: { t: 'برتقالي', r: 'burtuqali' },
+        mum: { t: 'ماما', r: 'mama' },
+        dad: { t: 'بابا', r: 'baba' },
+        grandma: { t: 'جدة', r: 'jadda' },
+        grandpa: { t: 'جد', r: 'jadd' },
+        brother: { t: 'أخ', r: 'akh' },
+        sister: { t: 'أخت', r: 'ukht' },
+        baby: { t: 'طفل', r: 'tifl' },
+        family: { t: 'عائلة', r: 'a\'ila' },
+        apple: { t: 'تفاحة', r: 'tuffaha' },
+        banana: { t: 'موزة', r: 'mawza' },
+        rice: { t: 'أرز', r: 'aruzz' },
+        noodles: { t: 'معكرونة', r: 'ma\'karuna' },
+        water: { t: 'ماء', r: 'ma\'' },
+        milk: { t: 'حليب', r: 'halib' },
+        bread: { t: 'خبز', r: 'khubz' },
+        egg: { t: 'بيضة', r: 'bayda' },
+        dog: { t: 'كلب', r: 'kalb' },
+        cat: { t: 'قطة', r: 'qitta' },
+        bird: { t: 'طائر', r: 'ta\'ir' },
+        fish: { t: 'سمكة', r: 'samaka' },
+        rabbit: { t: 'أرنب', r: 'arnab' },
+        horse: { t: 'حصان', r: 'hisan' },
+        cow: { t: 'بقرة', r: 'baqara' },
+        pig: { t: 'خنزير', r: 'khinzir' },
+        head: { t: 'رأس', r: 'ra\'s' },
+        eye: { t: 'عين', r: 'ayn' },
+        ear: { t: 'أذن', r: 'udhun' },
+        nose: { t: 'أنف', r: 'anf' },
+        mouth: { t: 'فم', r: 'fam' },
+        hand: { t: 'يد', r: 'yad' },
+        foot: { t: 'قدم', r: 'qadam' },
+        hair: { t: 'شعر', r: 'sha\'r' },
+        house: { t: 'بيت', r: 'bayt' },
+        door: { t: 'باب', r: 'bab' },
+        window: { t: 'نافذة', r: 'nafidha' },
+        bed: { t: 'سرير', r: 'sarir' },
+        table: { t: 'طاولة', r: 'tawila' },
+        chair: { t: 'كرسي', r: 'kursi' },
+        book: { t: 'كتاب', r: 'kitab' },
+        tv: { t: 'تلفاز', r: 'tilfaz' },
+        shirt: { t: 'قميص', r: 'qamis' },
+        trousers: { t: 'بنطال', r: 'bintal' },
+        shoes: { t: 'حذاء', r: 'hidha\'' },
+        socks: { t: 'جوارب', r: 'jawarib' },
+        hat: { t: 'قبعة', r: 'qubba\'a' },
+        dress: { t: 'فستان', r: 'fustan' },
+        coat: { t: 'معطف', r: 'mi\'taf' },
+        glasses: { t: 'نظارة', r: 'nazzara' },
+        sun: { t: 'شمس', r: 'shams' },
+        rain: { t: 'مطر', r: 'matar' },
+        wind: { t: 'رياح', r: 'riyah' },
+        snow: { t: 'ثلج', r: 'thalj' },
+        cloud: { t: 'غيمة', r: 'ghayma' },
+        hot: { t: 'حار', r: 'harr' },
+        cold: { t: 'بارد', r: 'barid' },
+        rainbow: { t: 'قوس قزح', r: 'qaws quzah' }
+      },
+      tips: {
+        greetings: 'Arabic is written from right to left. مرحبا marhaban is a friendly hello, and people often answer أهلا ahlan.',
+        numbers: 'Arabic has its own digits as well: ١ ٢ ٣ are 1 2 3. Many Arabic-speaking countries use both kinds.',
+        colours: 'Like Spanish, the colour comes after the thing: تفاحة حمراء tuffaha hamra is "a red apple". Colours change a little for feminine words.',
+        family: 'Children usually say ماما mama and بابا baba. In more formal Arabic, mother is أم umm and father is أب ab.',
+        food: 'Words ending in ة, said "a", are usually feminine, like تفاحة tuffaha (apple) and موزة mawza (banana).',
+        animals: 'Put ال al- in front to say "the": كلب kalb is "a dog" and الكلب al-kalb is "the dog".',
+        body: 'Body parts that come in pairs, like عين ayn (eye) and أذن udhun (ear), are feminine words.',
+        home: 'Many Arabic words grow from three letters. كتاب kitab (book) comes from k-t-b, which is about writing.',
+        clothes: 'جوارب jawarib (socks) is plural because socks come in pairs. One sock is جورب jawrab.',
+        weather: 'الجو al-jaww means the weather. الجو حار al-jaww harr means "it is hot".'
+      },
+      dialogues: {
+        greetings: [
+          { s: 'a', t: 'صباح الخير!', r: 'sabah al-khayr!', en: 'Good morning!' },
+          { s: 'you', t: 'صباح النور!', r: 'sabah an-nur!', en: 'Good morning to you!',
+            wrong: [{ t: 'آسف.', r: 'asif.', en: 'Sorry.' }, { t: 'لا.', r: 'la.', en: 'No.' }] },
+          { s: 'a', t: 'مع السلامة!', r: 'ma\'a as-salama!', en: 'Goodbye!' }
+        ],
+        numbers: [
+          { s: 'a', t: 'كم عمرك؟', r: 'kam umruk?', en: 'How old are you?' },
+          { s: 'you', t: 'عمري سبع سنوات.', r: 'umri sab\' sanawat.', en: 'I\'m seven.',
+            wrong: [{ t: 'شكرا.', r: 'shukran.', en: 'Thank you.' }, { t: 'أحمر.', r: 'ahmar.', en: 'Red.' }] },
+          { s: 'a', t: 'ممتاز!', r: 'mumtaz!', en: 'Excellent!' }
+        ],
+        colours: [
+          { s: 'a', t: 'ما لونك المفضل؟', r: 'ma lawnuk al-mufaddal?', en: 'What\'s your favourite colour?' },
+          { s: 'you', t: 'أحب الأزرق.', r: 'uhibbu al-azraq.', en: 'I like blue.',
+            wrong: [{ t: 'عمري سبع سنوات.', r: 'umri sab\' sanawat.', en: 'I\'m seven.' }, { t: 'مع السلامة.', r: 'ma\'a as-salama.', en: 'Goodbye.' }] },
+          { s: 'a', t: 'وأنا أيضا!', r: 'wa ana aydan!', en: 'Me too!' }
+        ],
+        family: [
+          { s: 'a', t: 'من هذه؟', r: 'man hadhihi?', en: 'Who is this?' },
+          { s: 'you', t: 'هذه ماما.', r: 'hadhihi mama.', en: 'This is my mum.',
+            wrong: [{ t: 'أحب الأزرق.', r: 'uhibbu al-azraq.', en: 'I like blue.' }, { t: 'شكرا.', r: 'shukran.', en: 'Thank you.' }] },
+          { s: 'a', t: 'أهلا وسهلا!', r: 'ahlan wa sahlan!', en: 'Welcome!' }
+        ],
+        food: [
+          { s: 'a', t: 'ماذا تريد أن تأكل؟', r: 'madha turid an ta\'kul?', en: 'What do you want to eat?' },
+          { s: 'you', t: 'أريد خبزا من فضلك.', r: 'urid khubzan min fadlik.', en: 'Bread, please.',
+            wrong: [{ t: 'هذه ماما.', r: 'hadhihi mama.', en: 'This is my mum.' }, { t: 'صباح الخير.', r: 'sabah al-khayr.', en: 'Good morning.' }] },
+          { s: 'a', t: 'تفضل!', r: 'tafaddal!', en: 'Here you go!' }
+        ],
+        animals: [
+          { s: 'a', t: 'ما الحيوان الذي تحبه؟', r: 'ma al-hayawan alladhi tuhibbuh?', en: 'What animal do you like?' },
+          { s: 'you', t: 'أحب القطط.', r: 'uhibbu al-qitat.', en: 'I like cats.',
+            wrong: [{ t: 'أريد خبزا من فضلك.', r: 'urid khubzan min fadlik.', en: 'Bread, please.' }, { t: 'صباح الخير.', r: 'sabah al-khayr.', en: 'Good morning.' }] },
+          { s: 'a', t: 'وأنا أيضا!', r: 'wa ana aydan!', en: 'Me too!' }
+        ],
+        body: [
+          { s: 'a', t: 'ما هذا؟', r: 'ma hadha?', en: 'What is this?' },
+          { s: 'you', t: 'هذا أنفي.', r: 'hadha anfi.', en: 'This is my nose.',
+            wrong: [{ t: 'أحب القطط.', r: 'uhibbu al-qitat.', en: 'I like cats.' }, { t: 'مع السلامة.', r: 'ma\'a as-salama.', en: 'Goodbye.' }] },
+          { s: 'a', t: 'صحيح!', r: 'sahih!', en: 'That\'s right!' }
+        ],
+        home: [
+          { s: 'a', t: 'أين الكتاب؟', r: 'ayna al-kitab?', en: 'Where is the book?' },
+          { s: 'you', t: 'على الطاولة.', r: 'ala at-tawila.', en: 'On the table.',
+            wrong: [{ t: 'هذا أنفي.', r: 'hadha anfi.', en: 'This is my nose.' }, { t: 'شكرا.', r: 'shukran.', en: 'Thank you.' }] },
+          { s: 'a', t: 'شكرا!', r: 'shukran!', en: 'Thank you!' }
+        ],
+        clothes: [
+          { s: 'a', t: 'الجو بارد في الخارج.', r: 'al-jaww barid fi al-kharij.', en: 'It\'s cold outside.' },
+          { s: 'you', t: 'سألبس المعطف.', r: 'sa-albas al-mi\'taf.', en: 'I\'ll wear my coat.',
+            wrong: [{ t: 'على الطاولة.', r: 'ala at-tawila.', en: 'On the table.' }, { t: 'أحب القطط.', r: 'uhibbu al-qitat.', en: 'I like cats.' }] },
+          { s: 'a', t: 'فكرة جيدة!', r: 'fikra jayyida!', en: 'Good idea!' }
+        ],
+        weather: [
+          { s: 'a', t: 'كيف الجو اليوم؟', r: 'kayfa al-jaww al-yawm?', en: 'What\'s the weather like today?' },
+          { s: 'you', t: 'إنها تمطر.', r: 'innaha tumtir.', en: 'It\'s raining.',
+            wrong: [{ t: 'سألبس المعطف.', r: 'sa-albas al-mi\'taf.', en: 'I\'ll wear my coat.' }, { t: 'شكرا.', r: 'shukran.', en: 'Thank you.' }] },
+          { s: 'a', t: 'خذ المظلة!', r: 'khudh al-mizalla!', en: 'Take the umbrella!' }
+        ]
+      }
     }
   };
 

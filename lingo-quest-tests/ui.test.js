@@ -5,16 +5,25 @@ const Babel = require('@babel/standalone');
 const { test, assert, eq, run } = require('./harness');
 const APP = path.join(__dirname, '../lingo-quest');
 
-let dom, win, doc, LQ, spoken, downloads;
+let dom, win, doc, LQ, spoken, downloads, oscillators = 0;
 function boot(savedState) {
   dom = new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>', { url: 'https://lingo.test/', pretendToBeVisual: true, runScripts: 'outside-only' });
   win = dom.window; doc = win.document;
   spoken = []; downloads = [];
   win.speechSynthesis = {
-    getVoices: () => [{ lang: 'zh-CN', name: 'Tingting' }, { lang: 'es-ES', name: 'Monica' }, { lang: 'vi-VN', name: 'Linh' }],
+    getVoices: () => [{ lang: 'zh-CN', name: 'Tingting' }, { lang: 'es-ES', name: 'Monica' }, { lang: 'vi-VN', name: 'Linh' }, { lang: 'ar-SA', name: 'Maged' }],
     speak: u => spoken.push(u.text), cancel() {}, addEventListener() {}, removeEventListener() {}
   };
   win.SpeechSynthesisUtterance = function (t) { this.text = t; };
+  oscillators = 0;
+  win.AudioContext = function () {
+    const param = () => ({ value: 0, setValueAtTime() {}, exponentialRampToValueAtTime() {} });
+    const node = () => ({ connect() {}, gain: param() });
+    this.state = 'running'; this.currentTime = 0; this.destination = {};
+    this.createGain = node;
+    this.createOscillator = () => { oscillators++; return Object.assign(node(), { frequency: param(), start() {}, stop() {} }); };
+    this.createBuffer = () => ({}); this.createBufferSource = () => Object.assign(node(), { start() {} });
+  };
   win.URL.createObjectURL = () => 'blob:x'; win.URL.revokeObjectURL = () => {};
   win.HTMLAnchorElement.prototype.click = function () { downloads.push(this.download); };
 
@@ -22,7 +31,7 @@ function boot(savedState) {
   win.eval(fs.readFileSync(path.join(__dirname, 'node_modules/react/umd/react.development.js'), 'utf8'));
   win.eval(fs.readFileSync(path.join(__dirname, 'node_modules/react-dom/umd/react-dom.development.js'), 'utf8'));
   win.eval('window.LQ = { debug: {}, noAutoMount: true };');
-  ['data/languages', 'data/pictures', 'core/tones', 'core/content', 'core/srs', 'core/storage', 'core/questions', 'core/speech']
+  ['data/languages', 'data/pictures', 'core/tones', 'core/content', 'core/srs', 'core/storage', 'core/questions', 'core/speech', 'core/sfx']
     .forEach(f => win.eval(fs.readFileSync(path.join(APP, 'js', f + '.js'), 'utf8')));
   ['ui/common', 'ui/lesson', 'ui/home', 'ui/parent', 'app'].forEach(f => {
     const src = fs.readFileSync(path.join(APP, 'js', f + '.jsx'), 'utf8');
@@ -53,7 +62,9 @@ async function createLearner(name, band, langs) {
 }
 
 /* Answer the current question; wrongFirst tries a wrong option first. */
+async function skipIntros() { for (let n = 0; n < 5 && $('.intro-go'); n++) await click($('.intro-go'), 'intro'); }
 async function answer(wrongFirst) {
+  await skipIntros();
   const q = LQ.debug.q;
   if (q.kind === 'listen-type') {
     if (wrongFirst) { await type($('input[aria-label="Your answer"]'), 'zzz'); await click(byText('Check'), 'check'); }
@@ -75,6 +86,7 @@ async function answer(wrongFirst) {
 
 async function playLesson(opts = {}) {
   for (let guard = 0; guard < 80; guard++) {
+    if ($('.intro-go')) { await click($('.intro-go'), 'intro'); continue; }
     const step = $('.step-name') ? $('.step-name').textContent : null;
     if (hasText('Back to the map')) return;
     if (step === 'Learn') { await click($('.btn.primary.grow'), 'learn next'); continue; }
@@ -118,6 +130,9 @@ test('create the first learner (adult) — goes straight to a Chinese map', asyn
 
 test('adult plays unit 1 end to end: stars, coins, sticker, unlock', async () => {
   await click($$('.stone')[0], 'unit 1');
+  eq($('.step-name').textContent, 'Start', 'unit opens on its start screen');
+  assert(hasText('Greetings') && $('.intro-steps li'), 'start screen lists the steps');
+  await skipIntros();
   eq($('.step-name').textContent, 'Learn');
   assert(spoken.length >= 0);
   await playLesson({ wrongFirst: true });
@@ -182,7 +197,7 @@ test('sticker book shows earned stickers', async () => {
   eq($$('.slot:not(.empty)').length, 1, 'Vietnamese sticker');
   await click($$('.seg button').find(b => b.textContent === 'Spanish'), 'es stickers');
   eq($$('.slot:not(.empty)').length, 0, 'no Spanish yet');
-  assert(hasText('2 / 30'));
+  assert(hasText('2 / 40'));
 });
 
 test('parent gate blocks a wrong answer and opens on the right one', async () => {
@@ -241,7 +256,7 @@ test('this week shows a row per learner', async () => {
 });
 
 test('backup: export saves a dated file and records the date', async () => {
-  await click(tab('Backup'), 'backup tab');
+  await click(tab('Settings'), 'backup tab');
   assert(hasText('Last full backup: never'));
   await click(byText('Export'), 'export');
   await tick(30);
@@ -250,12 +265,12 @@ test('backup: export saves a dated file and records the date', async () => {
 });
 
 test('backup: reminder setting toggles', async () => {
-  await click(byText('Off'), 'off'); eq(state().settings.backupReminder, false);
+  await click($$('.seg button').find(b => b.textContent === 'Off' && b.closest('.field').textContent.includes('Backup reminder')), 'off'); eq(state().settings.backupReminder, false);
   await click(byText('14 days'), '14'); eq(state().settings.backupReminder, true); eq(state().settings.reminderDays, 14);
 });
 
 test('backup: voices list shows each language', async () => {
-  assert(hasText('Tingting') && hasText('Monica') && hasText('Linh'));
+  assert(hasText('Tingting') && hasText('Monica') && hasText('Linh') && hasText('Maged'));
 });
 
 test('backup: restore preview, merge, and replace', async () => {
@@ -310,9 +325,17 @@ test('adding from the picker needs the parent gate', async () => {
 
 test('pre-reader lesson: no text on cards, only picture and sound questions, no tip step', async () => {
   await click($$('.stone')[0], 'unit 1');
+  spoken.length = 0;
+  await tick(400);
+  assert(spoken.join(' ').includes("Let's learn Greetings"), 'start screen is read aloud: ' + spoken.join('|'));
+  await skipIntros(); await tick(400);
   assert(!$('.learn-card .word'), 'no written word for pre-readers');
+  const firstWord = LQ.content.unitWords('zh', 'greetings', []).find(w => $('.learn-card .en').textContent === w.en);
+  const i = spoken.indexOf(firstWord.en);
+  assert(i >= 0 && spoken[i + 1] === firstWord.t, 'English first, then Chinese: ' + spoken.slice(-3).join('|'));
   const kinds = new Set(), steps = new Set();
   for (let guard = 0; guard < 60 && !hasText('Back to the map'); guard++) {
+    if ($('.intro-go')) { assert($('.intro-text').textContent.length > 20, 'game is explained'); await click($('.intro-go'), 'intro'); continue; }
     const step = $('.step-name').textContent; steps.add(step);
     if (step === 'Learn') { await click($('.btn.primary.grow'), 'next'); continue; }
     if (step === 'Chat') { assert(!$('.replies'), 'pre-readers just listen'); assert(!$('.bubble .t'), 'no text bubbles'); await click($('.btn.primary.block'), 'chat'); continue; }
@@ -333,6 +356,7 @@ test('early reader sees pinyin on Chinese words and a character hint', async () 
   boot(s); win.ReactDOM.createRoot($('#root')).render(win.React.createElement(LQ.App)); await tick(50);
   await click($$('.who-card').find(c => c.textContent.includes('Mia')), 'pick Mia');
   await click($$('.stone')[1], 'numbers');
+  await skipIntros();
   assert($('.learn-card ruby rt'), 'pinyin above characters');
   eq($('.learn-card rt').textContent, 'yī'); assert(hasText('One line'), 'character hint');
   await click($('[aria-label="Leave"]'), 'leave');
@@ -361,6 +385,7 @@ test('family: play together with two learners', async () => {
   await click(byText('Start'), 'start');
   let n = 0;
   while (!hasText('Great teamwork!') && n++ < 30) {
+    if ($('.intro-go')) { await click($('.intro-go'), 'intro'); continue; }
     assert(/'s turn/.test(doc.body.textContent), 'turn banner');
     await answer(false);
   }
@@ -426,11 +451,47 @@ test('worlds: finishing world 1 opens world 2 on the map, and either world can b
   eq($$('.stone.done').length, 5); assert($('.worlds button.on').textContent.includes('15/15'));
   await click($$('.worlds button').find(b => b.textContent.includes('My world')), 'world 2');
   await click($$('.stone')[0], 'animals');
+  assert(hasText('Animals') && $('.intro-steps'), 'animals start screen');
+  await skipIntros();
   assert($('.learn-card'), 'animals lesson starts');
   await playLesson({ lang: 'zh', unit: 'animals' });
   await click(byText('Back to the map'), 'back');
   assert($('.worlds button.on').textContent.includes('My world'), 'back on world 2');
   assert(!$$('.stone')[1].disabled, 'Body unlocked');
+});
+
+test('sound effects: wrong, correct and unit-complete sounds play, and the setting turns them off', async () => {
+  const kid = LQ.store.newProfile({ name: 'Sam', band: 'adult', langs: ['zh'] });
+  boot({ schema: 1, custom: [], settings: { backupReminder: false, reminderDays: 30, lastBackup: Date.now(), sfx: true }, profiles: [kid] });
+  win.ReactDOM.createRoot($('#root')).render(win.React.createElement(LQ.App)); await tick(50);
+  LQ.sfx.played.length = 0;
+  await click($$('.stone')[0], 'unit 1');
+  await playLesson({ wrongFirst: true });
+  const names = LQ.sfx.played.join(',');
+  assert(/wrong/.test(names), 'wrong sound: ' + names);
+  assert(/correct/.test(names), 'correct sound');
+  assert(/complete/.test(names), 'unit complete fanfare');
+  await tick(1800);
+  assert(/star1/.test(LQ.sfx.played.join(',')), 'star dings: ' + LQ.sfx.played.join(','));
+  assert(oscillators > 10, 'notes were actually made: ' + oscillators);
+  await click(byText('Back to the map'), 'back');
+  // Turn sounds off in the parent area.
+  await click(tab('Family'), 'family'); await click(byText('Parent area'), 'parent'); await passGate();
+  await click(tab('Settings'), 'settings');
+  await click($$('.seg button').find(b => b.textContent === 'Off' && b.closest('.field').textContent.includes('Sound effects')), 'sfx off');
+  eq(state().settings.sfx, false);
+  const before = oscillators;
+  LQ.sfx.play('correct'); LQ.sfx.play('wrong');
+  eq(oscillators, before, 'no notes while off');
+  await click($$('.seg button').find(b => b.textContent === 'On' && b.closest('.field').textContent.includes('Sound effects')), 'sfx on');
+  eq(state().settings.sfx, true); assert(oscillators > before, 'sample chime plays when turned on');
+});
+
+test('sound effects never break the app when the device has no audio', async () => {
+  boot(); delete win.AudioContext;
+  win.ReactDOM.createRoot($('#root')).render(win.React.createElement(LQ.App)); await tick(50);
+  eq(LQ.sfx.play('correct'), false);
+  assert(hasText('Set up the first learner'));
 });
 
 run('ui').then(f => process.exit(f ? 1 : 0));

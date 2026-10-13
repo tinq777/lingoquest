@@ -136,12 +136,16 @@
   }
 
   /* Loose comparison form: no marks, no punctuation, lower case. */
+  var PUNCT = /[¡!¿?.,，。！？、'’"؟،ʿʾ]/g;
+  /* Arabic: drop short-vowel marks and tatweel; loosely, treat alef and ending variants alike. */
+  function arabicMarks(s) { return s.replace(/[ً-ٰٟـ]/g, ''); }
+  function arabicLoose(s) { return s.replace(/[أإآٱ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي').replace(/ؤ/g, 'و').replace(/ئ/g, 'ي'); }
   function loose(s) {
-    return nfd(s).replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D')
-      .toLowerCase().replace(/[¡!¿?.,，。！？、'’"]/g, '').replace(/\s+/g, ' ').trim();
+    return arabicLoose(arabicMarks(nfd(s).replace(/[̀-ͯ]/g, ''))).replace(/đ/g, 'd').replace(/Đ/g, 'D')
+      .toLowerCase().replace(PUNCT, '').replace(/-/g, ' ').replace(/\s+/g, ' ').trim();
   }
   function tidy(s) {
-    return nfc(String(s)).toLowerCase().replace(/[¡!¿?.,，。！？、'’"]/g, '').replace(/\s+/g, ' ').trim();
+    return arabicMarks(nfc(String(s))).toLowerCase().replace(PUNCT, '').replace(/\s+/g, ' ').trim();
   }
 
   LQ.tones = {

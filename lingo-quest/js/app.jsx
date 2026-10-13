@@ -39,6 +39,7 @@
   }
 
   function SessionDone(props) {
+    useEffect(function () { LQ.sfx.play('complete'); }, []);
     return <div className="screen center">
       <h1>{props.title}</h1>
       {props.children}
@@ -82,7 +83,7 @@
           onClick={function () { setSel(on ? sel.filter(function (x) { return x !== p.id; }) : sel.concat([p.id])); }}>
           <Avatar profile={p} size={54} />{p.name}</button>;
       })}</div>
-      <div className="seg">{langs.map(function (L) {
+      <div className={'seg' + (langs.length > 3 ? ' seg-4' : '')}>{langs.map(function (L) {
         return <button key={L.id} className={L.id === useLang ? 'on' : ''} onClick={function () { setLang(L.id); }}>{L.name}</button>;
       })}</div>
       <button className="btn sun block" disabled={sel.length < 2} onClick={function () {
@@ -146,6 +147,7 @@
   function App() {
     var st = useState(function () { return LQ.store.load(); }), state = st[0], setState = st[1];
     var stateRef = useRef(state); stateRef.current = state;
+    LQ.sfx.setEnabled(state.settings.sfx !== false);
     var first = state.profiles.length === 0 ? { name: 'welcome' } : state.profiles.length === 1 ? { name: 'home', id: state.profiles[0].id } : { name: 'picker' };
     var scS = useState(first), screen = scS[0], setScreen = scS[1];
     var gateS = useState(null), gate = gateS[0], setGate = gateS[1];

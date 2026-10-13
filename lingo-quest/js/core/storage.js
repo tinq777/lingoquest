@@ -13,7 +13,7 @@
   function uid(prefix) { return (prefix || 'p') + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 
   function defaultState() {
-    return { schema: SCHEMA, profiles: [], custom: [], settings: { backupReminder: true, reminderDays: 30, lastBackup: null } };
+    return { schema: SCHEMA, profiles: [], custom: [], settings: { backupReminder: true, reminderDays: 30, lastBackup: null, sfx: true } };
   }
 
   function normalizeProfile(p) {

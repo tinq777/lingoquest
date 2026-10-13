@@ -87,8 +87,10 @@
     var T = LQ.tones, raw = String(input || '');
     if (!T.tidy(raw)) return { ok: false, exact: false };
     var nospace = function (s) { return s.replace(/\s+/g, ''); };
-    if (word.lang === 'zh') {
+    if (word.lang === 'zh' || word.lang === 'ar') {
+      // Characters / Arabic script, or the romanised spelling.
       if (nospace(T.tidy(raw)) === nospace(T.tidy(word.t))) return { ok: true, exact: true };
+      if (word.lang === 'ar' && nospace(T.loose(raw)) === nospace(T.loose(word.t))) return { ok: true, exact: false };
       if (word.r && nospace(T.tidy(raw)) === nospace(T.tidy(word.r))) return { ok: true, exact: true };
       if (word.r && nospace(T.loose(raw)) === nospace(T.loose(word.r))) return { ok: true, exact: false };
       return { ok: false, exact: false };

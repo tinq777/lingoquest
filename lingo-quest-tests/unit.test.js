@@ -13,8 +13,8 @@ let seed = 7; const rng = () => { seed = (seed * 16807) % 2147483647; return see
 const LANGS = Object.keys(LQ.LANGUAGES);
 
 /* ---------- Content integrity ---------- */
-test('three languages registered, Chinese is the default', () => {
-  eq(LANGS.sort().join(), 'es,vi,zh'); eq(LQ.defaultLang(), 'zh'); eq(LQ.langList()[0].id, 'zh');
+test('four languages registered, Chinese is the default', () => {
+  eq(LANGS.slice().sort().join(), 'ar,es,vi,zh'); eq(LQ.langList().map(l => l.id).join(), 'zh,es,vi,ar'); eq(LQ.defaultLang(), 'zh'); eq(LQ.langList()[0].id, 'zh');
 });
 test('10 units with 8 unique concepts each, unique ids across units', () => {
   eq(LQ.UNITS.length, 10);
@@ -64,13 +64,30 @@ test('Vietnamese: Northern forms used (bố, quả)', () => {
   const v = LQ.LANGUAGES.vi.words;
   eq(v.dad.t, 'bố'); eq(v.pig.t, 'con lợn'); eq(v.hat.t, 'mũ'); eq(v.socks.t, 'tất'); assert(/^quả /.test(v.apple.t)); assert(/^quả /.test(v.banana.t)); eq(LQ.LANGUAGES.vi.variant, 'Northern (Hanoi)');
 });
+test('Arabic: every word is Arabic script with an English-letter spelling, right to left', () => {
+  const A = LQ.LANGUAGES.ar; assert(A.rtl); eq(A.voice, 'ar-SA'); eq(A.tones, null);
+  Object.entries(A.words).forEach(([id, w]) => {
+    assert(/^[\u0600-\u06FF ]+$/.test(w.t), id + ' not Arabic script: ' + w.t);
+    assert(w.r && /^[a-z' -]+$/.test(w.r), id + ' bad spelling: ' + w.r);
+  });
+  Object.values(A.dialogues).forEach(d => d.concat(d[1].wrong).forEach(l => { assert(/[\u0600-\u06FF]/.test(l.t), 'line ' + l.t); assert(l.r, 'line spelling ' + l.t); }));
+  eq(A.words.mum.t, 'ماما'); eq(A.words.book.t, 'كتاب');
+});
+test('Arabic typed answers: script with or without vowel marks, or the spelling', () => {
+  const w = LQ.content.wordByKey('ar:apple', []), q2 = LQ.questions.checkTyped;
+  assert(q2('تفاحة', w).exact, 'script'); assert(q2('تُفّاحَة', w).exact, 'with vowel marks');
+  assert(q2('تفاحه', w).ok, 'loose ending'); assert(q2('tuffaha', w).exact, 'spelling');
+  assert(q2('Tuffaha!', w).ok); assert(!q2('موزة', w).ok); assert(!q2('mawza', w).ok);
+  const g = LQ.content.wordByKey('ar:goodbye', []);
+  assert(q2("ma'a as-salama", g).exact); assert(q2('maa as salama', g).ok, 'no apostrophe or hyphen');
+});
 test('tips and 3-line dialogues for every unit and language', () => {
   LANGS.forEach(l => LQ.UNITS.forEach(u => {
     const L = LQ.LANGUAGES[l];
     assert(L.tips[u.id] && L.tips[u.id].length > 20, 'tip ' + l + u.id);
     const d = L.dialogues[u.id];
     eq(d.length, 3, 'dialogue ' + l + u.id); eq(d[1].s, 'you'); eq(d[1].wrong.length, 2);
-    d.concat(d[1].wrong).forEach(x => { assert(x.t && x.en, 'line ' + l + u.id); if (l === 'zh') assert(x.r, 'pinyin ' + u.id); });
+    d.concat(d[1].wrong).forEach(x => { assert(x.t && x.en, 'line ' + l + u.id); if (l === 'zh' || l === 'ar') assert(x.r, 'romanisation ' + l + u.id); });
     d[1].wrong.forEach(x => assert(x.t !== d[1].t, 'wrong equals right ' + l + u.id));
   }));
 });
@@ -268,7 +285,7 @@ test('custom words validate and join their unit', () => {
 test('word of the day is stable for a date and differs across days', () => {
   eq(LQ.content.wordOfDay('2026-10-12').id, LQ.content.wordOfDay('2026-10-12').id);
   const ids = new Set(); for (let d = 1; d <= 20; d++) ids.add(LQ.content.wordOfDay('2026-10-' + String(d).padStart(2, '0')).id);
-  assert(ids.size > 8); eq(LQ.content.wordOfDay('2026-10-12').words.length, 3);
+  assert(ids.size > 8); eq(LQ.content.wordOfDay('2026-10-12').words.length, 4);
 });
 test('custom picture escapes markup', () => {
   assert(!/<script/.test(LQ.customPicture('<script>alert(1)</script>')));

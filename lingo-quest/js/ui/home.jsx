@@ -8,7 +8,7 @@
     return <div className="screen center" style={{ gap: 18 }}>
       <div style={{ width: 120, height: 120 }}><Pic svg={LQ.AVATARS.panda} /></div>
       <div className="hero-title">Lingo Quest</div>
-      <p className="muted" style={{ maxWidth: 300 }}>Learn <span className="zh">中文</span>, Spanish and Vietnamese together, a few minutes a day.</p>
+      <p className="muted" style={{ maxWidth: 300 }}>Learn <span className="zh">中文</span>, Spanish, Vietnamese and Arabic together, a few minutes a day.</p>
       <button className="btn primary block" onClick={props.onStart}>Set up the first learner</button>
       {props.onImport ? <button className="btn ghost block" onClick={props.onImport}>Restore from a backup</button> : null}
       {props.error ? <div className="notice bad" role="status">{props.error}</div> : null}
@@ -198,7 +198,7 @@
     var got = p.stickers.filter(function (k) { return LQ.LANGUAGES[k.split(':')[0]] && LQ.unitById(k.split(':')[1]); }).length;
     return <div className="screen">
       <div className="row between"><h2>Sticker book</h2><span className="pill">{got} / {total}</span></div>
-      <div className="seg">{LQ.langList().map(function (L) {
+      <div className={'seg' + (LQ.langList().length > 3 ? ' seg-4' : '')}>{LQ.langList().map(function (L) {
         return <button key={L.id} className={L.id === lang ? 'on' : ''} aria-pressed={L.id === lang} onClick={function () { setLang(L.id); }}>{L.name}</button>;
       })}</div>
       <div className="list grow" style={{ gap: 12 }}>{LQ.WORLDS.map(function (w) {
@@ -231,7 +231,7 @@
             <div className="wotd-line"><WordText word={zh} size={30} /><ui.SpeakBtn text={zh.t} lang="zh" /></div>
             <span className="en">{wotd.en}</span>
             {others.map(function (w) {
-              return <div key={w.lang} className="wotd-line small"><b>{LQ.LANGUAGES[w.lang].name}:</b> <WordText word={w} size={16} /><ui.SpeakBtn text={w.t} lang={w.lang} /></div>;
+              return <div key={w.lang} className="wotd-line small"><b>{LQ.LANGUAGES[w.lang].name}:</b> <WordText word={w} size={w.lang === 'ar' ? 22 : 16} /><ui.SpeakBtn text={w.t} lang={w.lang} /></div>;
             })}
           </div>
         </div>

@@ -109,13 +109,13 @@
     function add(e) {
       e.preventDefault();
       if (!ok) return;
-      props.onAdd({ lang: lang, unit: unit, en: en.trim(), t: t.trim(), r: lang === 'zh' ? r.trim() : null });
+      props.onAdd({ lang: lang, unit: unit, en: en.trim(), t: t.trim(), r: (lang === 'zh' || lang === 'ar') ? r.trim() || null : null });
       setEn(''); setT(''); setR(''); setPage(0);
     }
     return <div className="screen">
       <h2>Your own words</h2>
       <form className="list" onSubmit={add}>
-        <div className="seg">{LQ.langList().map(function (L) {
+        <div className={'seg' + (LQ.langList().length > 3 ? ' seg-4' : '')}>{LQ.langList().map(function (L) {
           return <button type="button" key={L.id} className={L.id === lang ? 'on' : ''} onClick={function () { setLang(L.id); }}>{L.name}</button>;
         })}</div>
         <div className="row">
@@ -127,6 +127,7 @@
         <div className="row">
           <input className="input" aria-label={LQ.LANGUAGES[lang].name + ' word'} placeholder={LQ.LANGUAGES[lang].name + ' word'} value={t} maxLength={40} onChange={function (e) { setT(e.target.value); }} />
           {lang === 'zh' ? <input className="input" aria-label="Pinyin" placeholder="Pinyin, e.g. lǎo shī" value={r} maxLength={60} onChange={function (e) { setR(e.target.value); }} /> : null}
+          {lang === 'ar' ? <input className="input" aria-label="English-letter spelling" placeholder="Spelling, e.g. mudarris" value={r} maxLength={60} onChange={function (e) { setR(e.target.value); }} /> : null}
         </div>
         <button className="btn jade block" disabled={!ok}><Icon name="plus" />Add word</button>
       </form>
@@ -189,7 +190,13 @@
     }
 
     return <div className="screen">
-      <h2>Backup</h2>
+      <h2>Settings</h2>
+      <div className="field"><span>Sound effects</span>
+        <div className="seg">
+          <button className={s.settings.sfx !== false ? 'on' : ''} aria-pressed={s.settings.sfx !== false} onClick={function () { props.onSettings({ sfx: true }); LQ.sfx.setEnabled(true); LQ.sfx.play('correct'); }}>On</button>
+          <button className={s.settings.sfx === false ? 'on' : ''} aria-pressed={s.settings.sfx === false} onClick={function () { props.onSettings({ sfx: false }); }}>Off</button>
+        </div></div>
+      <div className="field"><span>Backup</span></div>
       <div className={'notice' + (overdue ? ' bad' : '')}>Last full backup: {fmtDate(s.settings.lastBackup)}.{overdue ? ' Time for a new one.' : ''}</div>
       <div className="row">
         <select className="input" aria-label="What to back up" value={who} onChange={function (e) { setWho(e.target.value); }}>
@@ -237,7 +244,7 @@
   function ParentArea(props) {
     var tabS = useState('learners'), tab = tabS[0], setTab = tabS[1];
     var s = props.state;
-    var TABS = [['learners', 'Learners', 'family'], ['week', 'This week', 'review'], ['words', 'Words', 'edit'], ['backup', 'Backup', 'parent']];
+    var TABS = [['learners', 'Learners', 'family'], ['week', 'This week', 'review'], ['words', 'Words', 'edit'], ['backup', 'Settings', 'parent']];
     var body = null;
     if (tab === 'learners') body = <LearnersTab state={s} onEdit={props.onEdit} onAdd={props.onAdd} onDelete={props.onDelete} />;
     if (tab === 'week') body = <WeekTab state={s} />;

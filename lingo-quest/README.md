@@ -1,6 +1,6 @@
 # Lingo Quest
 
-A free, offline family app for learning Chinese first, with Spanish and Northern Vietnamese as options. Up to 4 learners, each with their own age band, languages, stars, stickers and spaced-repetition progress. Built on the Chess Quest stack: React with in-browser Babel, no bundler, no build step, localStorage only.
+A free, offline family app for learning Chinese first, with Spanish, Northern Vietnamese and Modern Standard Arabic as options. Up to 4 learners, each with their own age band, languages, stars, stickers and spaced-repetition progress. Built on the Chess Quest stack: React with in-browser Babel, no bundler, no build step, localStorage only.
 
 ## Deploy to Cloudflare Pages
 

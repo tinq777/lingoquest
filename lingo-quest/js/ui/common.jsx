@@ -85,6 +85,14 @@
       }
       return <span className="word" style={{ fontSize: size }}><span className="zh">{w.t}</span> <ToneText text={w.r} system="pinyin" /></span>;
     }
+    if (L && L.rtl) {
+      var hideR = props.mastered && !shown;
+      return <span className={'word ar-word' + (props.mastered ? ' tap' : '')} style={{ fontSize: size }}
+        onClick={props.mastered ? function (e) { e.stopPropagation(); setShown(true); } : null} title={hideR ? 'Tap to show the spelling' : null}>
+        <span className="ar" dir="rtl" lang="ar">{w.t}</span>
+        {w.r ? <span className={'translit' + (hideR ? ' hide' : '')}>{w.r}</span> : null}
+      </span>;
+    }
     if (w.lang === 'es') {
       return <span className={'word' + (w.g ? ' g' + w.g : '')} style={{ fontSize: size }}>{w.t}</span>;
     }

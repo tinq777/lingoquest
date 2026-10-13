@@ -11,7 +11,7 @@ const LIBS = [
   fs.readFileSync(path.join(__dirname, 'node_modules/react/umd/react.production.min.js'), 'utf8'),
   fs.readFileSync(path.join(__dirname, 'node_modules/react-dom/umd/react-dom.production.min.js'), 'utf8')
 ];
-const PLAIN = ['data/languages', 'data/pictures', 'core/tones', 'core/content', 'core/srs', 'core/storage', 'core/questions', 'core/speech']
+const PLAIN = ['data/languages', 'data/pictures', 'core/tones', 'core/content', 'core/srs', 'core/storage', 'core/questions', 'core/speech', 'core/sfx']
   .map(f => fs.readFileSync(path.join(APP, 'js', f + '.js'), 'utf8'));
 const JSX = ['ui/common', 'ui/lesson', 'ui/home', 'ui/parent', 'app']
   .map(f => Babel.transform(fs.readFileSync(path.join(APP, 'js', f + '.jsx'), 'utf8'), { presets: ['react'] }).code);
@@ -20,7 +20,7 @@ let win, doc, LQ;
 function boot(state) {
   const dom = new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>', { url: 'https://lingo.test/', runScripts: 'outside-only' });
   win = dom.window; doc = win.document;
-  win.speechSynthesis = { getVoices: () => [{ lang: 'zh-CN', name: 'a' }, { lang: 'es-ES', name: 'b' }, { lang: 'vi-VN', name: 'c' }], speak() {}, cancel() {}, addEventListener() {}, removeEventListener() {} };
+  win.speechSynthesis = { getVoices: () => [{ lang: 'zh-CN', name: 'a' }, { lang: 'es-ES', name: 'b' }, { lang: 'vi-VN', name: 'c' }, { lang: 'ar-SA', name: 'd' }], speak() {}, cancel() {}, addEventListener() {}, removeEventListener() {} };
   win.SpeechSynthesisUtterance = function (t) { this.text = t; };
   win.localStorage.setItem('lingoQuest', JSON.stringify(state));
   LIBS.forEach(src => win.eval(src));
@@ -44,6 +44,7 @@ function checkScreen(band, where) {
     const en = $('.learn-card .en'); if (!en || !en.textContent.trim()) fail('no English word');
     if (band === 'pre' && $('.learn-card .word')) fail('pre-reader sees written word');
     if (band !== 'pre' && !$('.learn-card .word')) fail('no written word');
+    if (band !== 'pre' && where.split('/')[1] === 'ar' && (!$('.learn-card .ar[dir=rtl]') || !$('.learn-card .translit'))) fail('Arabic not right-to-left with spelling');
     if (band === 'pre' && $('[aria-label="Say it"]')) fail('mic shown to pre-reader');
   }
   if (s === 'Practise' || s === 'Checkpoint') {
@@ -81,11 +82,27 @@ async function playUnit(band, lang, unitIndex) {
   const world = LQ.worldOf(unit.id);
   await click($$('.worlds button').find(b => b.textContent.includes(world.title)), 'world ' + world.title);
   await click($$('.stone').find(x => x.textContent.includes(unit.title)), 'unit ' + unit.title);
-  const kinds = new Set(), steps = new Set();
-  for (let guard = 0; guard < 120; guard++) {
+  const kinds = new Set(), steps = new Set(), explained = new Set();
+  for (let guard = 0; guard < 160; guard++) {
     if (doc.body.textContent.includes('Back to the map')) break;
     const st = step(); if (!st) throw new Error(where + ': blank screen (no step, no result)');
-    steps.add(st); checkScreen(band, where);
+    steps.add(st);
+    const intro = $('[data-intro]');
+    if (intro) {
+      const kind = intro.dataset.intro;
+      if (!$('.intro-body h1') || !$('.intro-body h1').textContent.trim()) throw new Error(where + ': intro ' + kind + ' has no title');
+      if (kind === 'unit') { if ($$('.intro-steps li').length < 4) throw new Error(where + ': start screen missing steps'); }
+      else {
+        if (!$('.intro-text') || $('.intro-text').textContent.trim().length < 20) throw new Error(where + ': intro ' + kind + ' has no explanation');
+        if (!$('.demo')) throw new Error(where + ': intro ' + kind + ' has no picture of the game');
+      }
+      explained.add(kind);
+      await click($('.intro-go'), 'intro go'); continue;
+    }
+    checkScreen(band, where);
+    if ((st === 'Practise' || st === 'Checkpoint') && LQ.debug.q && !explained.has(LQ.debug.q.kind)) throw new Error(where + ': game ' + LQ.debug.q.kind + ' started without being explained');
+    if (st === 'Chat' && !explained.has('chat')) throw new Error(where + ': chat started without being explained');
+    if (st === 'Checkpoint' && !explained.has('check')) throw new Error(where + ': checkpoint started without being explained');
     if (st === 'Learn') { await click($('.btn.primary.grow'), 'learn next'); continue; }
     if (st === 'Tip') { await click($$('button').find(b => b.textContent === 'Next'), 'tip next'); continue; }
     if (st === 'Chat') {
@@ -110,13 +127,14 @@ async function playUnit(band, lang, unitIndex) {
   }
   assert(doc.body.textContent.includes('Back to the map'), where + ': lesson did not finish');
   eq(JSON.parse(win.localStorage.getItem('lingoQuest')).profiles[0].stars[lang + ':' + unit.id], 3, where + ' stars');
-  const want = band === 'pre' ? ['Learn', 'Practise', 'Chat', 'Checkpoint'] : ['Learn', 'Practise', 'Tip', 'Chat', 'Checkpoint'];
+  if (!explained.has('unit')) throw new Error(where + ': no start screen');
+  const want = band === 'pre' ? ['Start', 'Learn', 'Practise', 'Chat', 'Checkpoint'] : ['Start', 'Learn', 'Practise', 'Tip', 'Chat', 'Checkpoint'];
   eq([...steps].join(), want.join(), where + ' steps');
   return kinds;
 }
 
 const UNIT_COUNT = 10;
-for (const band of ['pre', 'early', 'adult']) for (const lang of ['zh', 'es', 'vi']) {
+for (const band of ['pre', 'early', 'adult']) for (const lang of ['zh', 'es', 'vi', 'ar']) {
   test(`${band} · ${lang}: all ${UNIT_COUNT} units play through with every screen filled`, async () => {
     for (let i = 0; i < UNIT_COUNT; i++) await playUnit(band, lang, i);
     eq(LQ.UNITS.length, UNIT_COUNT, 'unit count changed: update UNIT_COUNT');
@@ -127,11 +145,15 @@ test('pre-reader grown-up hint shows the English word and costs a star', async (
   boot({ schema: 1, custom: [], settings: { backupReminder: false, reminderDays: 30, lastBackup: Date.now() }, profiles: [prof] });
   await tick(20);
   await click($$('.stone')[0], 'unit 1');
+  await click($('.intro-go'), 'start');
   for (let i = 0; i < 8; i++) await click($('.btn.primary.grow'), 'learn');
+  if ($('.intro-go')) await click($('.intro-go'), 'game intro');
   for (let guard = 0; guard < 10 && LQ.debug.q.kind !== 'listen-pic'; guard++) {
+    if ($('.intro-go')) { await click($('.intro-go'), 'game intro'); continue; }
     await click($$('[data-key]').find(o => o.dataset.key === LQ.debug.q.answer), 'skip');
     const t = $('[aria-label="Choose this sound"]'); if (t) await click(t, 'tick');
     await click($$('.feedback button').find(b => b.textContent === 'Next'), 'next');
+    if ($('.intro-go')) await click($('.intro-go'), 'game intro');
   }
   eq(LQ.debug.q.kind, 'listen-pic');
   await click($$('button').find(b => b.textContent === 'Hint for grown-ups'), 'hint');

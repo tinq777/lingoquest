@@ -18,23 +18,43 @@
       list.filter(function (v) { return norm(v).split('-')[0] === base; })[0] || null;
   }
 
-  function speak(text, lang, opts) {
-    opts = opts || {};
-    var s = synth();
-    if (!s || !text || typeof window.SpeechSynthesisUtterance !== 'function') return false;
-    try {
+  /* English uses an Australian voice when the device has one. */
+  function englishVoice() { return pickVoice('en-AU') || pickVoice('en-GB') || pickVoice('en-US') || pickVoice('en'); }
+
+  function utterance(text, lang, opts) {
+    var u = new window.SpeechSynthesisUtterance(text);
+    if (lang === 'en') {
+      u.lang = 'en-AU';
+      var ev = englishVoice(); if (ev) { u.voice = ev; u.lang = ev.lang; }
+      u.rate = opts.enRate || 0.95;
+    } else {
       var L = LQ.LANGUAGES[lang];
-      var u = new window.SpeechSynthesisUtterance(text);
       u.lang = L ? (L.voice === 'es' ? 'es-ES' : L.voice) : lang;
       var v = L ? pickVoice(L.voice) : null;
       if (v) u.voice = v;
       u.rate = opts.rate || 0.85;
-      if (opts.onend) u.onend = opts.onend;
+    }
+    return u;
+  }
+
+  /* Say several parts in order, e.g. [{ text: 'apple', lang: 'en' }, { text: '苹果', lang: 'zh' }]. */
+  function sayParts(parts, opts) {
+    opts = opts || {};
+    var s = synth();
+    parts = (parts || []).filter(function (x) { return x && x.text; });
+    if (!s || !parts.length || typeof window.SpeechSynthesisUtterance !== 'function') return false;
+    try {
       s.cancel();
-      s.speak(u);
+      parts.forEach(function (x, i) {
+        var u = utterance(x.text, x.lang, opts);
+        if (i === parts.length - 1 && opts.onend) u.onend = opts.onend;
+        s.speak(u);
+      });
       return true;
     } catch (e) { return false; }
   }
+
+  function speak(text, lang, opts) { return sayParts([{ text: text, lang: lang }], opts); }
 
   function stop() { var s = synth(); try { if (s) s.cancel(); } catch (e) { /* ignore */ } }
 
@@ -99,5 +119,5 @@
     }
   } catch (e) { /* ignore */ }
 
-  LQ.speech = { unlock: unlock, speak: speak, stop: stop, pickVoice: pickVoice, report: report, onVoices: onVoices, canListen: canListen, listen: listen };
+  LQ.speech = { unlock: unlock, speak: speak, sayParts: sayParts, englishVoice: englishVoice, stop: stop, pickVoice: pickVoice, report: report, onVoices: onVoices, canListen: canListen, listen: listen };
 })(typeof window !== 'undefined' ? (window.LQ = window.LQ || {}) : (globalThis.LQ = globalThis.LQ || {}));

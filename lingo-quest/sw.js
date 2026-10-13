@@ -1,11 +1,11 @@
 /* Lingo Quest service worker: works offline after the first visit.
    Bump VERSION whenever any file changes so phones pick up the update. */
-var VERSION = 'lingo-quest-v4';
+var VERSION = 'lingo-quest-v7';
 var FILES = [
   './', 'manifest.webmanifest', 'css/app.css',
   'vendor/react.production.min.js', 'vendor/react-dom.production.min.js', 'vendor/babel.min.js',
   'js/boot.js', 'js/data/languages.js', 'js/data/pictures.js',
-  'js/core/tones.js', 'js/core/content.js', 'js/core/srs.js', 'js/core/storage.js', 'js/core/questions.js', 'js/core/speech.js',
+  'js/core/tones.js', 'js/core/content.js', 'js/core/srs.js', 'js/core/storage.js', 'js/core/questions.js', 'js/core/speech.js', 'js/core/sfx.js',
   'js/ui/common.jsx', 'js/ui/lesson.jsx', 'js/ui/home.jsx', 'js/ui/parent.jsx', 'js/app.jsx',
   'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png'
 ];

@@ -93,9 +93,12 @@
       '<path d="M84 14 v10 M79 19 h10 M14 70 v8 M10 74 h8" stroke="#f4a259" stroke-width="2.5" stroke-linecap="round"/>', '#fff0f3'),
     yes: svg('<circle cx="50" cy="50" r="34" fill="#2bb673" stroke="' + INK + '" stroke-width="2"/><path d="M33 51 L45 63 L68 38" fill="none" stroke="#fff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>', '#eafaf1'),
     no: svg('<circle cx="50" cy="50" r="34" fill="#e63946" stroke="' + INK + '" stroke-width="2"/><path d="M36 36 L64 64 M64 36 L36 64" stroke="#fff" stroke-width="8" stroke-linecap="round"/>', '#fdecee'),
-    please: svg('<g stroke="#c9946b" stroke-width="1.5" fill="' + SKIN + '"><path d="M50 20 Q40 22 38 40 L34 80 L50 82 Z"/><path d="M50 20 Q60 22 62 40 L66 80 L50 82 Z"/></g>' +
-      '<path d="M50 24 V80" stroke="#c9946b" stroke-width="1.5"/><path d="M38 56 q-6 -6 -2 -14 M62 56 q6 -6 2 -14" fill="' + SKIN + '" stroke="#c9946b" stroke-width="1.5"/>' +
-      '<rect x="32" y="78" width="36" height="12" rx="4" fill="#9b7ede"/><path d="M24 30 q-6 4 -4 10 M76 30 q6 4 4 10" fill="none" stroke="#f4a259" stroke-width="2.5" stroke-linecap="round"/>', '#f3efff'),
+    please: svg('<circle cx="40" cy="60" r="26" fill="#ffd166" stroke="' + INK + '" stroke-width="2"/>' +
+      '<path d="M28 56 q5 -5 10 0 M42 56 q5 -5 10 0" fill="none" stroke="' + INK + '" stroke-width="2.4" stroke-linecap="round"/>' +
+      '<circle cx="29" cy="65" r="3.2" fill="#f29c9c"/><circle cx="51" cy="65" r="3.2" fill="#f29c9c"/>' + smile(40, 69, 7) +
+      '<path d="M56 12 H90 Q94 12 94 16 V42 Q94 46 90 46 H70 L60 54 L62 46 H56 Q52 46 52 42 V16 Q52 12 56 12 Z" fill="#fff" stroke="' + INK + '" stroke-width="2" stroke-linejoin="round"/>' +
+      '<rect x="62" y="24" width="22" height="16" rx="2" fill="#ef476f" stroke="' + INK + '" stroke-width="1.5"/><rect x="60" y="19" width="26" height="6" rx="2" fill="#ef476f" stroke="' + INK + '" stroke-width="1.5"/>' +
+      '<path d="M73 19 V40" stroke="#ffd166" stroke-width="3"/><path d="M73 19 q-7 -8 -9 -2 q2 3 9 2 q7 -8 9 -2 q-2 3 -9 2" fill="#ffd166" stroke="' + INK + '" stroke-width="1.2"/>', '#f3efff'),
     sorry: svg('<circle cx="50" cy="52" r="30" fill="#ffd166" stroke="' + INK + '" stroke-width="2"/>' + eyes(50, 46, 10, 3) + frown(50, 62, 9) +
       '<path d="M36 52 q-3 7 0 10 q4 2 4 -3 q0 -3 -4 -7 Z" fill="#5bc0eb"/><path d="M33 38 l9 -5 M67 38 l-9 -5" stroke="' + INK + '" stroke-width="2.4" stroke-linecap="round"/>', '#eef6ff'),
     morning: svg('<rect width="100" height="100" rx="18" fill="#cdeafe"/><circle cx="50" cy="66" r="20" fill="#ffd166" stroke="#f4a259" stroke-width="2"/>' +
