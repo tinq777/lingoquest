@@ -301,6 +301,8 @@
   }
 
   LQ.PICTURES = P;
+  /* Drawing helpers shared with pictures-3-5.js. */
+  LQ.draw = { svg: svg, eyes: eyes, smile: smile, frown: frown, hand: hand, person: person, ringAt: ringAt, cloudShape: cloudShape, INK: INK, SKIN: SKIN, S: S };
   LQ.AVATARS = AVATARS;
   LQ.customPicture = customPicture;
 })(typeof window !== 'undefined' ? (window.LQ = window.LQ || {}) : (globalThis.LQ = globalThis.LQ || {}));

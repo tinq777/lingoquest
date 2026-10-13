@@ -15,7 +15,9 @@ To update: upload the folder again as a new deployment. Bump `VERSION` in `sw.js
 | Path | What it holds |
 | --- | --- |
 | `js/data/languages.js` | `UNITS` (shared concepts) and the `LANGUAGES` registry: words, tips, dialogues per language |
-| `js/data/pictures.js` | SVG picture cards and the six animal avatars |
+| `js/data/worlds-3-5.js` | Worlds 3–5 (15 units): words, tips and chats for every language, generated from tables |
+| `js/data/pictures.js` | SVG picture cards for worlds 1–2 and the six animal avatars |
+| `js/data/pictures-3-5.js` | SVG picture cards for worlds 3–5 |
 | `js/core/tones.js` | Tone detection, colouring and tone-variant questions for pinyin and Vietnamese |
 | `js/core/content.js` | Word lookup, custom words, word of the day |
 | `js/core/srs.js` | Spaced repetition (Leitner boxes) |

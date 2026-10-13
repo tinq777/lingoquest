@@ -11,7 +11,7 @@ const LIBS = [
   fs.readFileSync(path.join(__dirname, 'node_modules/react/umd/react.production.min.js'), 'utf8'),
   fs.readFileSync(path.join(__dirname, 'node_modules/react-dom/umd/react-dom.production.min.js'), 'utf8')
 ];
-const PLAIN = ['data/languages', 'data/pictures', 'core/tones', 'core/content', 'core/srs', 'core/storage', 'core/questions', 'core/speech', 'core/sfx']
+const PLAIN = ['data/languages', 'data/worlds-3-5', 'data/pictures', 'data/pictures-3-5', 'core/tones', 'core/content', 'core/srs', 'core/storage', 'core/questions', 'core/speech', 'core/sfx']
   .map(f => fs.readFileSync(path.join(APP, 'js', f + '.js'), 'utf8'));
 const JSX = ['ui/common', 'ui/lesson', 'ui/home', 'ui/parent', 'app']
   .map(f => Babel.transform(fs.readFileSync(path.join(APP, 'js', f + '.jsx'), 'utf8'), { presets: ['react'] }).code);
@@ -85,7 +85,7 @@ async function playUnit(band, lang, unitIndex) {
   boot(s); await tick(20);
   const where = band + '/' + lang + '/' + unit.id;
   const world = LQ.worldOf(unit.id);
-  await click($$('.worlds button').find(b => b.textContent.includes(world.title)), 'world ' + world.title);
+  await click($('.wdot[aria-label="' + world.title + '"]'), 'world ' + world.title);
   await click($$('.stone').find(x => x.textContent.includes(unit.title)), 'unit ' + unit.title);
   const kinds = new Set(), steps = new Set(), explained = new Set();
   for (let guard = 0; guard < 160; guard++) {
@@ -138,7 +138,7 @@ async function playUnit(band, lang, unitIndex) {
   return kinds;
 }
 
-const UNIT_COUNT = 10;
+const UNIT_COUNT = 25;
 for (const band of ['pre', 'early', 'adult']) for (const lang of ['zh', 'es', 'vi', 'ar']) {
   test(`${band} · ${lang}: all ${UNIT_COUNT} units play through with every screen filled`, async () => {
     for (let i = 0; i < UNIT_COUNT; i++) await playUnit(band, lang, i);

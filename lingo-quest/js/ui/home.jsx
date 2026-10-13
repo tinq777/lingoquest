@@ -98,15 +98,23 @@
     return (w || LQ.WORLDS[LQ.WORLDS.length - 1]).id;
   }
 
+  /* World picker: arrows either side of the world name, and a dot per world. */
   function WorldBar(props) {
-    var p = props.profile, lang = p.lang;
-    return <div className="seg worlds" role="tablist" aria-label="Worlds">{LQ.WORLDS.map(function (w, n) {
-      var open = LQ.store.unitUnlocked(p, lang, unitIndex(w.units[0]));
-      var stars = w.units.reduce(function (a, u) { return a + (p.stars[lang + ':' + u] || 0); }, 0);
-      return <button key={w.id} role="tab" aria-selected={props.world === w.id} className={props.world === w.id ? 'on' : ''}
-        onClick={function () { props.onPick(w.id); }}>
-        {open ? null : <Icon name="lock" />}{w.title}<span className="world-stars">{stars}/{w.units.length * 3}</span></button>;
-    })}</div>;
+    var p = props.profile, lang = p.lang, W = LQ.WORLDS;
+    var i = Math.max(0, W.findIndex(function (w) { return w.id === props.world; })), w = W[i];
+    var openAt = function (x) { return LQ.store.unitUnlocked(p, lang, unitIndex(x.units[0])); };
+    var stars = w.units.reduce(function (a, u) { return a + (p.stars[lang + ':' + u] || 0); }, 0);
+    return <div className="worlds">
+      <button className="icon-btn" aria-label="Previous world" disabled={i === 0} onClick={function () { props.onPick(W[i - 1].id); }}><Icon name="back" /></button>
+      <div className="world-mid">
+        <div className="world-title">{openAt(w) ? null : <Icon name="lock" />}<b>{w.title}</b><span className="world-stars"><Icon name="star" color="#ffc93c" />{stars}/{w.units.length * 3}</span></div>
+        <div className="wdots">{W.map(function (x) {
+          return <button key={x.id} className={'wdot' + (x.id === w.id ? ' on' : '') + (openAt(x) ? '' : ' locked')} aria-label={x.title} aria-pressed={x.id === w.id}
+            onClick={function () { props.onPick(x.id); }} />;
+        })}</div>
+      </div>
+      <button className="icon-btn flip" aria-label="Next world" disabled={i === W.length - 1} onClick={function () { props.onPick(W[i + 1].id); }}><Icon name="back" /></button>
+    </div>;
   }
 
   function MapTab(props) {
@@ -201,9 +209,9 @@
       <div className={'seg' + (LQ.langList().length > 3 ? ' seg-4' : '')}>{LQ.langList().map(function (L) {
         return <button key={L.id} className={L.id === lang ? 'on' : ''} aria-pressed={L.id === lang} onClick={function () { setLang(L.id); }}>{L.name}</button>;
       })}</div>
-      <div className="list grow" style={{ gap: 12 }}>{LQ.WORLDS.map(function (w) {
+      <div className="list grow book-list">{LQ.WORLDS.map(function (w) {
         return <div key={w.id} className="book-row">
-          <b>{w.title}</b>
+          <b className="book-label">{w.title}</b>
           <div className="book">{w.units.map(function (uid) {
             var u = LQ.unitById(uid), have = p.stickers.indexOf(lang + ':' + uid) >= 0;
             return have ? <div key={uid} className="slot pop" title={u.title}><Pic svg={LQ.PICTURES[u.emblem]} label={u.title} /></div>

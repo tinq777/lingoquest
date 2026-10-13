@@ -4,7 +4,7 @@ const store = {};
 globalThis.window = { localStorage: { getItem: k => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); }, removeItem: k => { delete store[k]; } } };
 globalThis.LQ = window.LQ = {};
 const ROOT = '../lingo-quest/js/';
-['data/languages', 'data/pictures', 'core/tones', 'core/content', 'core/srs', 'core/storage', 'core/questions'].forEach(f => {
+['data/languages', 'data/worlds-3-5', 'data/pictures', 'data/pictures-3-5', 'core/tones', 'core/content', 'core/srs', 'core/storage', 'core/questions'].forEach(f => {
   const src = require('fs').readFileSync(require('path').join(__dirname, ROOT + f + '.js'), 'utf8');
   new Function('window', 'globalThis', src)(window, globalThis);
 });
@@ -16,8 +16,8 @@ const LANGS = Object.keys(LQ.LANGUAGES);
 test('four languages registered, Chinese is the default', () => {
   eq(LANGS.slice().sort().join(), 'ar,es,vi,zh'); eq(LQ.langList().map(l => l.id).join(), 'zh,es,vi,ar'); eq(LQ.defaultLang(), 'zh'); eq(LQ.langList()[0].id, 'zh');
 });
-test('10 units with 8 unique concepts each (Numbers counts to 10), unique ids across units', () => {
-  eq(LQ.UNITS.length, 10);
+test('25 units with 8 unique concepts each (Numbers counts to 10), unique ids across units', () => {
+  eq(LQ.UNITS.length, 25); eq(LQ.WORLDS.length, 5);
   const ids = new Set();
   LQ.UNITS.forEach(u => { eq(u.concepts.length, u.id === 'numbers' ? 10 : 8, u.id); u.concepts.forEach(c => { assert(!ids.has(c.id), 'dup ' + c.id); ids.add(c.id); }); });
 });
@@ -25,7 +25,12 @@ test('every unit sits in exactly one world of five, in map order', () => {
   const seen = [];
   LQ.WORLDS.forEach(w => { eq(w.units.length, 5, w.id); w.units.forEach(u => { assert(LQ.unitById(u), 'unknown unit ' + u); seen.push(u); }); });
   eq(seen.join(), LQ.UNITS.map(u => u.id).join(), 'worlds follow unit order');
-  eq(LQ.worldOf('animals').id, 'w2');
+  eq(LQ.worldOf('animals').id, 'w2'); eq(LQ.worldOf('time').id, 'w3'); eq(LQ.worldOf('goodbyes').id, 'w5');
+  eq(LQ.WORLDS.map(w => w.title).join('|'), 'First words|My world|My day|Out and about|Visiting family');
+});
+test('English meanings are unique and every language has a different word for each meaning', () => {
+  const ens = new Set(); LQ.UNITS.forEach(u => u.concepts.forEach(c => { assert(!ens.has(c.en), 'dup English ' + c.en); ens.add(c.en); }));
+  LANGS.forEach(l => { const seen = {}; Object.entries(LQ.LANGUAGES[l].words).forEach(([id, w]) => { assert(!seen[w.t], l + ' same word for ' + id + ' and ' + seen[w.t]); seen[w.t] = id; }); });
 });
 test('every concept has a word in every language', () => {
   LANGS.forEach(l => LQ.UNITS.forEach(u => u.concepts.forEach(c => assert(LQ.LANGUAGES[l].words[c.id] && LQ.LANGUAGES[l].words[c.id].t, l + ':' + c.id))));
@@ -300,6 +305,13 @@ test('word of the day is stable for a date and differs across days', () => {
 });
 test('custom picture escapes markup', () => {
   assert(!/<script/.test(LQ.customPicture('<script>alert(1)</script>')));
+});
+
+test('stylesheet is complete: balanced braces and every section present', () => {
+  const css = require('fs').readFileSync(require('path').join(__dirname, '../lingo-quest/css/app.css'), 'utf8');
+  eq((css.match(/{/g) || []).length, (css.match(/}/g) || []).length, 'braces');
+  ['.boot', '.opt-label', '.intro-steps', '.result-star', '.ar-word', '.translit', '.voice-row', '.hint-pattern', '.wdot', '.book-label', '.fb-word', '.demo-chip']
+    .forEach(sel => assert(css.includes(sel + ' ') || css.includes(sel + ',') || css.includes(sel + '.') || css.includes(sel + ':'), 'missing ' + sel));
 });
 
 run('unit').then(f => process.exit(f ? 1 : 0));

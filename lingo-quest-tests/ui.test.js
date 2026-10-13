@@ -31,7 +31,7 @@ function boot(savedState) {
   win.eval(fs.readFileSync(path.join(__dirname, 'node_modules/react/umd/react.development.js'), 'utf8'));
   win.eval(fs.readFileSync(path.join(__dirname, 'node_modules/react-dom/umd/react-dom.development.js'), 'utf8'));
   win.eval('window.LQ = { debug: {}, noAutoMount: true };');
-  ['data/languages', 'data/pictures', 'core/tones', 'core/content', 'core/srs', 'core/storage', 'core/questions', 'core/speech', 'core/sfx']
+  ['data/languages', 'data/worlds-3-5', 'data/pictures', 'data/pictures-3-5', 'core/tones', 'core/content', 'core/srs', 'core/storage', 'core/questions', 'core/speech', 'core/sfx']
     .forEach(f => win.eval(fs.readFileSync(path.join(APP, 'js', f + '.js'), 'utf8')));
   ['ui/common', 'ui/lesson', 'ui/home', 'ui/parent', 'app'].forEach(f => {
     const src = fs.readFileSync(path.join(APP, 'js', f + '.jsx'), 'utf8');
@@ -191,13 +191,13 @@ test('add Vietnamese from the map and switch languages; progress is kept per lan
 
 test('sticker book shows earned stickers', async () => {
   await click(tab('Stickers'), 'stickers tab');
-  eq($$('.slot').length, 10, 'two worlds of five for one language');
+  eq($$('.slot').length, 25, 'five worlds of five for one language');
   eq($$('.slot:not(.empty)').length, 1, 'Chinese sticker');
   await click($$('.seg button').find(b => b.textContent === 'Vietnamese'), 'vi stickers');
   eq($$('.slot:not(.empty)').length, 1, 'Vietnamese sticker');
   await click($$('.seg button').find(b => b.textContent === 'Spanish'), 'es stickers');
   eq($$('.slot:not(.empty)').length, 0, 'no Spanish yet');
-  assert(hasText('2 / 40'));
+  assert(hasText('2 / 100'));
 });
 
 test('parent gate blocks a wrong answer and opens on the right one', async () => {
@@ -446,20 +446,21 @@ test('worlds: finishing world 1 opens world 2 on the map, and either world can b
   ['greetings', 'numbers', 'colours', 'family', 'food'].forEach(u => { w.stars['zh:' + u] = 3; });
   s.profiles = [w];
   boot(s); win.ReactDOM.createRoot($('#root')).render(win.React.createElement(LQ.App)); await tick(50);
-  assert($('.worlds button.on').textContent.includes('My world'), 'opens on world 2');
+  assert($('.world-title').textContent.includes('My world'), 'opens on world 2');
   const titles = $$('.stone .label').map(l => l.textContent);
   assert(titles[0].includes('Animals') && titles[4].includes('Weather'), titles.join('|'));
   assert(!$$('.stone')[0].disabled && $$('.stone')[1].disabled, 'Animals open, Body locked');
-  await click($$('.worlds button').find(b => b.textContent.includes('First words')), 'world 1');
-  eq($$('.stone.done').length, 5); assert($('.worlds button.on').textContent.includes('15/15'));
-  await click($$('.worlds button').find(b => b.textContent.includes('My world')), 'world 2');
+  await click($('.wdot[aria-label="First words"]'), 'world 1');
+  eq($$('.stone.done').length, 5); assert($('.world-title').textContent.includes('15/15'));
+  await click($('[aria-label="Next world"]'), 'world 2 by arrow');
+  assert($('.world-title').textContent.includes('My world'));
   await click($$('.stone')[0], 'animals');
   assert(hasText('Animals') && $('.intro-steps'), 'animals start screen');
   await skipIntros();
   assert($('.learn-card'), 'animals lesson starts');
   await playLesson({ lang: 'zh', unit: 'animals' });
   await click(byText('Back to the map'), 'back');
-  assert($('.worlds button.on').textContent.includes('My world'), 'back on world 2');
+  assert($('.world-title').textContent.includes('My world'), 'back on world 2');
   assert(!$$('.stone')[1].disabled, 'Body unlocked');
 });
 

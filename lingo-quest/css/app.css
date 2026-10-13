@@ -187,7 +187,7 @@ rt.hide { visibility: hidden; }
 .sticker-new { width: 110px; height: 110px; }
 
 /* Sticker book */
-.book { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.book { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
 .book-row { display: flex; flex-direction: column; gap: 4px; }
 .slot { aspect-ratio: 1; border-radius: 16px; background: #fff; box-shadow: 0 3px 0 var(--line); padding: 6px; display: flex; align-items: center; justify-content: center; }
 .slot.empty { background: rgba(255,255,255,.5); box-shadow: none; border: 2px dashed var(--line); color: var(--line); font-weight: 800; font-size: 22px; }
@@ -254,10 +254,25 @@ rt.hide { visibility: hidden; }
 .boot-msg { color: var(--ink-2); font-weight: 700; max-width: 320px; }
 .boot-msg.bad { color: var(--red-d); }
 
-/* World switcher above the map */
-.worlds button { display: inline-flex; align-items: center; justify-content: center; gap: 4px; font-size: 15px; }
-.worlds .ico { width: 16px; height: 16px; }
-.world-stars { font-size: 12px; font-weight: 700; opacity: .7; margin-left: 2px; }
+/* World picker above the map */
+.worlds { display: flex; align-items: center; gap: 4px; background: var(--card); border-radius: 16px; padding: 2px 4px; box-shadow: 0 2px 0 var(--line); }
+.worlds .icon-btn { width: 40px; height: 40px; flex: none; }
+.worlds .icon-btn:disabled { opacity: .25; }
+.worlds .flip .ico { transform: scaleX(-1); }
+.world-mid { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.world-title { display: flex; align-items: center; gap: 6px; font-size: 16px; white-space: nowrap; }
+.world-title .ico { width: 16px; height: 16px; }
+.world-stars { display: inline-flex; align-items: center; gap: 2px; font-size: 13px; font-weight: 700; color: var(--ink-2); }
+.wdots { display: flex; gap: 6px; }
+.wdot { width: 10px; height: 10px; border-radius: 50%; border: 0; padding: 0; background: var(--line); }
+.wdot.on { background: var(--ink); width: 22px; border-radius: 5px; }
+.wdot.locked:not(.on) { background: #e6ece9; box-shadow: inset 0 0 0 1.5px var(--line); }
+/* Sticker book: one row per world */
+.book-list { gap: 8px; }
+.book-row { display: grid; grid-template-columns: 74px minmax(0, 1fr); align-items: center; gap: 8px; }
+.book-label { font-size: 13px; line-height: 1.15; }
+.book { gap: 6px; grid-template-columns: repeat(5, minmax(0, 52px)); justify-content: start; }
+.book .slot { padding: 4px; border-radius: 12px; font-size: 16px; }
 
 /* English helper words */
 .opt.picopt { padding-bottom: 26px; }
