@@ -29,7 +29,7 @@
       case 'word-meaning': return { title: 'What does it mean?', text: 'Read the ' + L + ' word, then tap its English meaning.' + again };
       case 'meaning-word': return { title: 'Say it in ' + L, text: 'Read the English word, then tap the ' + L + ' word for it.' + again };
       case 'tone': return { title: 'Tone detective', text: 'Listen carefully. The answers only differ in their tone marks, so tap the one that sounds like what you heard.' + (band === 'early' ? ' The colours show the tones.' : '') };
-      case 'listen-type': return { title: 'Listen and type', text: 'Listen, then type the word you hear.' + (lang === 'zh' ? ' Pinyin or characters both work, and tone marks are optional.' : lang === 'ar' ? ' Arabic letters or the English-letter spelling both work.' : ' Accents are optional.') + ' After two tries the answer is shown.' };
+      case 'listen-type': return { title: 'Listen and type', text: 'Listen, then type the word you hear.' + (lang === 'zh' ? ' Pinyin or characters both work, and tone marks are optional.' : lang === 'ar' ? ' Arabic letters or the English-letter spelling both work.' : ' Accents are optional.') + ' Stuck? Tap Hint to see the first letter, or tap it again for the answer.' };
       case 'chat': return { title: 'Chat time', text: pre ? 'Listen to a little conversation. Tap Next to hear each line.' : 'Read the conversation and pick the best reply. Then tap Next to hear the rest.' };
       case 'check': return { title: 'Checkpoint', text: pre ? "Let's play once more to win stars! Get it right the first time for three stars." : 'Show what you learned. First-try answers earn the most stars.' };
       default: return null;
@@ -128,12 +128,13 @@
     var typedS = useState(''), typed = typedS[0], setTyped = typedS[1];
     var noteS = useState(''), note = noteS[0], setNote = noteS[1];
     var hintS = useState(false), hint = hintS[0], setHint = hintS[1];
+    var thS = useState(0), typeHint = thS[0], setTypeHint = thS[1];
     var attempts = useRef(1);
     var finished = useRef(false);
 
     useEffect(function () {
       attempts.current = 1; finished.current = false;
-      setWrong({}); setDone(false); setSel(null); setFb(''); setTyped(''); setNote(''); setHint(false);
+      setWrong({}); setDone(false); setSel(null); setFb(''); setTyped(''); setNote(''); setHint(false); setTypeHint(0);
       var t = null;
       if (q.kind === 'listen-pic') t = setTimeout(prompt0, 250);
       else if (q.kind === 'listen-type' || q.kind === 'tone') t = setTimeout(function () { say(w); }, 250);
@@ -249,7 +250,8 @@
         <button className="big-speaker" style={{ width: 'min(14vh, 90px)', height: 'min(14vh, 90px)' }} aria-label="Play the word again" onClick={function () { say(w); }}><Icon name="speaker" /></button>
         <span className="prompt-pic" style={{ width: 'min(14vh, 90px)' }}><Pic svg={w.pic} /></span>
       </div>;
-      var reveal = attempts.current >= 3;
+      var reveal = attempts.current >= 3 || typeHint >= 2;
+      var nextHint = function () { if (done || typeHint >= 2) return; attempts.current += 1; setTypeHint(typeHint + 1); };
       var submit = function (e) {
         e.preventDefault();
         if (done) return;
@@ -263,9 +265,12 @@
       body = <form className="list" onSubmit={submit}>
         <input className="input" aria-label="Your answer" autoComplete="off" autoCapitalize="off" spellCheck="false" value={typed} disabled={done}
           placeholder={w.lang === 'zh' ? 'Pinyin or characters' : w.lang === 'ar' ? 'Arabic or English letters' : 'Type the word'} onChange={function (e) { setTyped(e.target.value); }} style={{ fontSize: 22, textAlign: 'center' }} />
+        {typeHint === 1 && !reveal && !done ? <div className="notice type-hint" style={{ textAlign: 'center' }}>
+          <div><b>{w.en}</b></div><div className="hint-pattern" aria-label={'Starts with ' + LQ.questions.hintPattern(w)[0]}>{LQ.questions.hintPattern(w)}</div></div> : null}
         {reveal && !done ? <div className="notice" style={{ textAlign: 'center' }}>It's <WordText word={w} size={24} /> — type it, or tap Got it.</div> : null}
         {note ? <div className="notice good" style={{ textAlign: 'center' }}>{note}</div> : null}
         <button type="submit" className="btn jade block" disabled={done || (!typed && !reveal)}>{reveal ? 'Got it' : 'Check'}</button>
+        {!done && !reveal ? <button type="button" className="btn ghost sm hint-btn" onClick={nextHint}>{typeHint === 0 ? 'Hint' : 'Show answer'}</button> : null}
       </form>;
     }
 
@@ -456,7 +461,7 @@
       return band === 'pre' ? all.filter(function (w) { return !w.custom; }) : all;
     }, [lang, unitId]);
     var pool = useMemo(function () { return LQ.content.langWords(lang, props.custom); }, [lang]);
-    var practise = useMemo(function () { return LQ.questions.buildSet(words, pool, B.practise, band); }, [words]);
+    var practise = useMemo(function () { return LQ.questions.buildSet(words, pool, B.practise, band, null, null, ['listen-type']); }, [words]);
     var check = useMemo(function () { return LQ.questions.buildSet(words, pool, B.check, band); }, [words]);
     var stepS = useState('intro'), step = stepS[0], setStep = stepS[1];
     var seen = useRef({});

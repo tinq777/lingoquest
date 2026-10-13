@@ -56,11 +56,11 @@
 
   /* Build a session of `count` questions for the given words. srsLang lets
      weak words come up more than once. */
-  function buildSet(words, pool, count, band, rng, srsLang) {
+  function buildSet(words, pool, count, band, rng, srsLang, skipKinds) {
     rng = rng || Math.random;
     if (band === 'pre') { words = words.filter(function (w) { return !w.custom; }); pool = pool.filter(function (w) { return !w.custom; }); }
     if (!words.length) return [];
-    var kinds = KINDS[band] || KINDS.adult;
+    var kinds = (KINDS[band] || KINDS.adult).filter(function (k) { return !skipKinds || skipKinds.indexOf(k) < 0; });
     var ordered = shuffle(words, rng);
     if (srsLang) {
       ordered.sort(function (a, b) {
@@ -110,5 +110,16 @@
     return Math.max(1, Math.min(3, Math.round(avg)));
   }
 
-  LQ.questions = { KINDS: KINDS, buildSet: buildSet, make: make, checkTyped: checkTyped, starsFor: starsFor, unitStars: unitStars, shuffle: shuffle, distractors: distractors };
+  /* Shape of a typed answer: first letter of each word, then a gap per letter.
+     Uses the romanised spelling (pinyin, Arabic spelling) without tone marks. */
+  function hintPattern(word) {
+    var src = word.r || word.t;
+    return String(src).split(/\s+/).map(function (part) {
+      var letters = Array.from(LQ.tones.loose(part).replace(/[^a-z0-9\u0600-\u06FF]/g, ''));
+      if (!letters.length) return '';
+      return letters[0] + (letters.length > 1 ? ' ' + new Array(letters.length).join('_ ').trim() : '');
+    }).filter(Boolean).join('   ');
+  }
+
+  LQ.questions = { hintPattern: hintPattern, KINDS: KINDS, buildSet: buildSet, make: make, checkTyped: checkTyped, starsFor: starsFor, unitStars: unitStars, shuffle: shuffle, distractors: distractors };
 })(typeof window !== 'undefined' ? (window.LQ = window.LQ || {}) : (globalThis.LQ = globalThis.LQ || {}));

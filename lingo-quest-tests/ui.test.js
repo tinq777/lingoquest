@@ -536,4 +536,23 @@ test('voices: choosing a voice in the parent area saves it and is used for speec
   assert(used.some(x => x.startsWith('Lee:') && x.includes('Greetings')), 'instructions use Lee: ' + used.join('|'));
 });
 
+test('typing game: Hint shows the meaning and first letter, then the answer, and each costs a try', async () => {
+  boot(); await tick(20);
+  const w = LQ.content.wordByKey('ar:hello', []);
+  const q = LQ.questions.make('listen-type', w, LQ.content.langWords('ar', []), 'adult', Math.random);
+  let attempts = null;
+  const host = doc.createElement('div'); doc.body.appendChild(host);
+  win.ReactDOM.createRoot(host).render(win.React.createElement(LQ.lesson.QuestionView, { q, band: 'adult', onDone: a => { attempts = a; } }));
+  await tick(30);
+  await click($$('button').find(b => b.textContent === 'Hint'), 'hint');
+  assert(host.textContent.includes('hello') && host.querySelector('.hint-pattern').textContent === 'm _ _ _ _ _ _ _', 'first hint: ' + host.textContent);
+  await click($$('button').find(b => b.textContent === 'Show answer'), 'show answer');
+  assert(host.textContent.includes('مرحبا') && host.textContent.includes('Got it'), 'answer shown');
+  assert(!$$('button').some(b => b.textContent === 'Show answer' || b.textContent === 'Hint'), 'no more hints');
+  await click($$('button').find(b => b.textContent === 'Got it'), 'got it');
+  await click($$('.feedback button').find(b => b.textContent === 'Next'), 'next');
+  eq(attempts, 3, 'two hints = two extra tries');
+  host.remove();
+});
+
 run('ui').then(f => process.exit(f ? 1 : 0));

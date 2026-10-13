@@ -16,10 +16,10 @@ const LANGS = Object.keys(LQ.LANGUAGES);
 test('four languages registered, Chinese is the default', () => {
   eq(LANGS.slice().sort().join(), 'ar,es,vi,zh'); eq(LQ.langList().map(l => l.id).join(), 'zh,es,vi,ar'); eq(LQ.defaultLang(), 'zh'); eq(LQ.langList()[0].id, 'zh');
 });
-test('10 units with 8 unique concepts each, unique ids across units', () => {
+test('10 units with 8 unique concepts each (Numbers counts to 10), unique ids across units', () => {
   eq(LQ.UNITS.length, 10);
   const ids = new Set();
-  LQ.UNITS.forEach(u => { eq(u.concepts.length, 8, u.id); u.concepts.forEach(c => { assert(!ids.has(c.id), 'dup ' + c.id); ids.add(c.id); }); });
+  LQ.UNITS.forEach(u => { eq(u.concepts.length, u.id === 'numbers' ? 10 : 8, u.id); u.concepts.forEach(c => { assert(!ids.has(c.id), 'dup ' + c.id); ids.add(c.id); }); });
 });
 test('every unit sits in exactly one world of five, in map order', () => {
   const seen = [];
@@ -92,7 +92,8 @@ test('tips and 3-line dialogues for every unit and language', () => {
   }));
 });
 test('simple characters for early readers have hints', () => {
-  ['one', 'two', 'three', 'eight', 'hand', 'door', 'rain'].forEach(id => assert(LQ.LANGUAGES.zh.words[id].hint, id));
+  ['one', 'two', 'three', 'eight', 'nine', 'ten', 'hand', 'door', 'rain'].forEach(id => assert(LQ.LANGUAGES.zh.words[id].hint, id));
+  eq(LQ.LANGUAGES.zh.words.ten.t, '十'); eq(LQ.LANGUAGES.es.words.ten.t, 'diez'); eq(LQ.LANGUAGES.vi.words.ten.t, 'mười'); eq(LQ.LANGUAGES.ar.words.ten.t, 'عشرة');
 });
 
 /* ---------- Tones ---------- */
@@ -165,6 +166,16 @@ test('typed answers: lenient matching', () => {
   assert(LQ.questions.checkTyped('Manzana', es).exact); assert(LQ.questions.checkTyped('la manzana!', es).exact);
   assert(LQ.questions.checkTyped('qua chuoi', vi).ok && !LQ.questions.checkTyped('qua chuoi', vi).exact);
   assert(!LQ.questions.checkTyped('', vi).ok); assert(!LQ.questions.checkTyped('quả táo', vi).ok);
+});
+test('typing hint shows the first letter and a gap per letter, without tone marks', () => {
+  const H = k => LQ.questions.hintPattern(LQ.content.wordByKey(k, []));
+  eq(H('zh:hello'), 'n _   h _ _'); eq(H('ar:hello'), 'm _ _ _ _ _ _ _');
+  eq(H('es:apple'), 'l _   m _ _ _ _ _ _'); eq(H('vi:banana'), 'q _ _   c _ _ _ _'); eq(H('zh:water'), 's _ _ _');
+});
+test('practice rounds can leave out a game type', () => {
+  const words = LQ.content.unitWords('zh', 'food', []), pool = LQ.content.langWords('zh', []);
+  for (let i = 0; i < 20; i++) LQ.questions.buildSet(words, pool, 8, 'adult', rng, null, ['listen-type']).forEach(q => assert(q.kind !== 'listen-type'));
+  assert([...Array(10)].some(() => LQ.questions.buildSet(words, pool, 8, 'adult', rng).some(q => q.kind === 'listen-type')), 'still used elsewhere');
 });
 test('stars by attempts: 3, 2, 1', () => {
   eq(LQ.questions.starsFor(1), 3); eq(LQ.questions.starsFor(2), 2); eq(LQ.questions.starsFor(5), 1);

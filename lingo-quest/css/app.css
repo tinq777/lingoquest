@@ -308,3 +308,5 @@ rt.hide { visibility: hidden; }
 /* Voice picker */
 .voice-row { display: grid; grid-template-columns: 92px minmax(0, 1fr) 44px; gap: 8px; align-items: center; }
 .voice-row .input { min-height: 40px; padding: 6px 8px; font-size: 14px; }
+
+.hint-pattern { font-weight: 800; font-size: 22px; letter-spacing: 1px; white-space: pre-wrap; margin-top: 2px; }

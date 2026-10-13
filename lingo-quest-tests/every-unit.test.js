@@ -48,7 +48,12 @@ function checkScreen(band, where) {
     if (band === 'pre' && $('[aria-label="Say it"]')) fail('mic shown to pre-reader');
   }
   if (s === 'Practise' || s === 'Checkpoint') {
-    if (q.kind === 'listen-type') { if (!$('input[aria-label="Your answer"]')) fail('no answer box'); return; }
+    if (q.kind === 'listen-type') {
+      if (s === 'Practise') fail('typing game on brand-new words');
+      if (!$('input[aria-label="Your answer"]')) fail('no answer box');
+      if (!$$('button').some(b => b.textContent === 'Hint')) fail('no Hint button');
+      return;
+    }
     const opts = $$('[data-key]');
     if (opts.length < 2) fail('only ' + opts.length + ' options');
     if (!opts.some(o => o.dataset.key === q.answer)) fail('answer not offered');
