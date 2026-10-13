@@ -256,7 +256,7 @@ test('this week shows a row per learner', async () => {
 });
 
 test('backup: export saves a dated file and records the date', async () => {
-  await click(tab('Settings'), 'backup tab');
+  await click(tab('Backup'), 'backup tab');
   assert(hasText('Last full backup: never'));
   await click(byText('Export'), 'export');
   await tick(30);
@@ -269,8 +269,11 @@ test('backup: reminder setting toggles', async () => {
   await click(byText('14 days'), '14'); eq(state().settings.backupReminder, true); eq(state().settings.reminderDays, 14);
 });
 
-test('backup: voices list shows each language', async () => {
+test('sound tab: a voice picker for English and each language', async () => {
+  await click(tab('Sound'), 'sound tab');
+  eq($$('.voices > *').length, 5, 'English plus four languages');
   assert(hasText('Tingting') && hasText('Monica') && hasText('Linh') && hasText('Maged'));
+  await click(tab('Backup'), 'back to backup');
 });
 
 test('backup: restore preview, merge, and replace', async () => {
@@ -477,7 +480,7 @@ test('sound effects: wrong, correct and unit-complete sounds play, and the setti
   await click(byText('Back to the map'), 'back');
   // Turn sounds off in the parent area.
   await click(tab('Family'), 'family'); await click(byText('Parent area'), 'parent'); await passGate();
-  await click(tab('Settings'), 'settings');
+  await click(tab('Sound'), 'sound');
   await click($$('.seg button').find(b => b.textContent === 'Off' && b.closest('.field').textContent.includes('Sound effects')), 'sfx off');
   eq(state().settings.sfx, false);
   const before = oscillators;
@@ -492,6 +495,45 @@ test('sound effects never break the app when the device has no audio', async () 
   win.ReactDOM.createRoot($('#root')).render(win.React.createElement(LQ.App)); await tick(50);
   eq(LQ.sfx.play('correct'), false);
   assert(hasText('Set up the first learner'));
+});
+
+test('voices: the most natural voice wins and novelty voices are skipped', async () => {
+  boot();
+  const V = (name, lang, uri, extra) => Object.assign({ name, lang, voiceURI: uri || ('com.apple.voice.compact.' + lang + '.' + name) }, extra || {});
+  let list = [V('Eddy (English (Australia))', 'en-AU', 'com.apple.eloquence.en-AU.Eddy'), V('Grandpa (English (Australia))', 'en-AU', 'com.apple.eloquence.en-AU.Grandpa'),
+    V('Zarvox', 'en-US', 'com.apple.speech.synthesis.voice.Zarvox'), V('Karen', 'en-AU'), V('Samantha', 'en-US'),
+    V('Eddy (Chinese (China mainland))', 'zh-CN', 'com.apple.eloquence.zh-CN.Eddy'), V('Tingting', 'zh-CN')];
+  win.speechSynthesis.getVoices = () => list;
+  eq(LQ.speech.englishVoice().name, 'Karen', 'natural Australian voice, not Eddy');
+  eq(LQ.speech.voicesFor('zh-CN')[0].name, 'Tingting', 'natural Chinese voice first');
+  list = list.concat([V('Lee (Premium)', 'en-AU', 'com.apple.voice.premium.en-AU.Lee')]);
+  eq(LQ.speech.englishVoice().name, 'Lee (Premium)', 'downloaded premium voice preferred');
+  list = list.filter(v => v.lang !== 'en-AU' || /Eddy|Grandpa/.test(v.name));
+  eq(LQ.speech.englishVoice().name, 'Samantha', 'falls back to a natural voice in another English');
+  LQ.speech.setPreferred({ en: 'com.apple.eloquence.en-AU.Grandpa' });
+  eq(LQ.speech.englishVoice().name, 'Grandpa (English (Australia))', 'a chosen voice is respected');
+  LQ.speech.setPreferred({});
+  assert(LQ.speech.isRobotic(list[0]) && !LQ.speech.isRobotic(list.find(v => v.name === 'Samantha')));
+});
+
+test('voices: choosing a voice in the parent area saves it and is used for speech', async () => {
+  const kid = LQ.store.newProfile({ name: 'Ann', band: 'pre', langs: ['zh'] });
+  boot({ schema: 1, custom: [], settings: { backupReminder: false, reminderDays: 30, lastBackup: Date.now(), sfx: true }, profiles: [kid] });
+  const used = [];
+  win.speechSynthesis.getVoices = () => [{ name: 'Karen', lang: 'en-AU', voiceURI: 'k' }, { name: 'Lee', lang: 'en-AU', voiceURI: 'l' }, { name: 'Tingting', lang: 'zh-CN', voiceURI: 't' }];
+  win.speechSynthesis.speak = u => used.push((u.voice || {}).name + ':' + u.text);
+  win.ReactDOM.createRoot($('#root')).render(win.React.createElement(LQ.App)); await tick(50);
+  await click(tab('Family'), 'family'); await click(byText('Parent area'), 'parent'); await passGate();
+  await click(tab('Sound'), 'sound');
+  const sel = $('select[aria-label="English (instructions) voice"]');
+  Object.getOwnPropertyDescriptor(win.HTMLSelectElement.prototype, 'value').set.call(sel, 'l');
+  sel.dispatchEvent(new win.Event('change', { bubbles: true })); await tick();
+  eq(state().settings.voices.en, 'l');
+  assert(used.some(x => x.startsWith('Lee:')), 'sample plays in the chosen voice: ' + used.join('|'));
+  used.length = 0;
+  await click($('[aria-label="Close parent area"]'), 'close');
+  await click(tab('Map'), 'map'); await click($$('.stone')[0], 'unit 1'); await tick(450);
+  assert(used.some(x => x.startsWith('Lee:') && x.includes('Greetings')), 'instructions use Lee: ' + used.join('|'));
 });
 
 run('ui').then(f => process.exit(f ? 1 : 0));

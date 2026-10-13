@@ -154,9 +154,7 @@
     var msgS = useState(null), msg = msgS[0], setMsg = msgS[1];
     var prevS = useState(null), preview = prevS[0], setPreview = prevS[1];
     var confS = useState(false), confirmReplace = confS[0], setConfirmReplace = confS[1];
-    var voiceS = useState(LQ.speech.report()), voices = voiceS[0], setVoices = voiceS[1];
     var fileRef = useRef(null);
-    useEffect(function () { return LQ.speech.onVoices(function () { setVoices(LQ.speech.report()); }); }, []);
     var overdue = LQ.store.backupOverdue(s);
 
     function doExport() {
@@ -190,13 +188,7 @@
     }
 
     return <div className="screen">
-      <h2>Settings</h2>
-      <div className="field"><span>Sound effects</span>
-        <div className="seg">
-          <button className={s.settings.sfx !== false ? 'on' : ''} aria-pressed={s.settings.sfx !== false} onClick={function () { props.onSettings({ sfx: true }); LQ.sfx.setEnabled(true); LQ.sfx.play('correct'); }}>On</button>
-          <button className={s.settings.sfx === false ? 'on' : ''} aria-pressed={s.settings.sfx === false} onClick={function () { props.onSettings({ sfx: false }); }}>Off</button>
-        </div></div>
-      <div className="field"><span>Backup</span></div>
+      <h2>Backup</h2>
       <div className={'notice' + (overdue ? ' bad' : '')}>Last full backup: {fmtDate(s.settings.lastBackup)}.{overdue ? ' Time for a new one.' : ''}</div>
       <div className="row">
         <select className="input" aria-label="What to back up" value={who} onChange={function (e) { setWho(e.target.value); }}>
@@ -216,11 +208,7 @@
             return <button key={d} className={on ? 'on' : ''} onClick={function () { props.onSettings({ backupReminder: true, reminderDays: d }); }}>{d} days</button>;
           })}
         </div></div>
-      <div className="field"><span>Voices on this device</span>
-        <div className="list small">{voices.map(function (v) {
-          return <div key={v.lang} className="row between"><b>{v.name}</b><span className={v.ok ? 'muted' : ''} style={v.ok ? null : { color: 'var(--red-d)', fontWeight: 800 }}>
-            {v.ok ? v.voice : 'Missing: add a ' + v.name + ' voice in your device settings'}</span></div>;
-        })}</div></div>
+
 
       {preview ? <ui.Sheet title="Restore this backup?" onClose={function () { setPreview(null); setConfirmReplace(false); }}>
         <div className="card list small">
@@ -241,14 +229,46 @@
     </div>;
   }
 
+  function SoundTab(props) {
+    var s = props.state;
+    var voiceS = useState(LQ.speech.report()), voices = voiceS[0], setVoices = voiceS[1];
+    useEffect(function () { return LQ.speech.onVoices(function () { setVoices(LQ.speech.report()); }); }, []);
+    return <div className="screen">
+      <h2>Sound</h2>
+      <div className="field"><span>Sound effects</span>
+        <div className="seg">
+          <button className={s.settings.sfx !== false ? 'on' : ''} aria-pressed={s.settings.sfx !== false} onClick={function () { props.onSettings({ sfx: true }); LQ.sfx.setEnabled(true); LQ.sfx.play('correct'); }}>On</button>
+          <button className={s.settings.sfx === false ? 'on' : ''} aria-pressed={s.settings.sfx === false} onClick={function () { props.onSettings({ sfx: false }); }}>Off</button>
+        </div></div>
+      <div className="field"><span>Voices</span>
+        <div className="list small voices">{voices.map(function (v) {
+          if (!v.ok) return <div key={v.lang} className="row between"><b>{v.name}</b><span style={{ color: 'var(--red-d)', fontWeight: 800 }}>Missing: add one in your device settings</span></div>;
+          return <div key={v.lang} className="voice-row">
+            <b>{v.name}</b>
+            <select className="input" aria-label={v.name + ' voice'} value={v.chosen}
+              onChange={function (e) {
+                var next = Object.assign({}, s.settings.voices || {}); if (e.target.value) next[v.lang] = e.target.value; else delete next[v.lang];
+                LQ.speech.setPreferred(next); props.onSettings({ voices: next }); setVoices(LQ.speech.report()); LQ.speech.sample(v.lang);
+              }}>
+              <option value="">Automatic: {v.chosen ? 'best voice' : v.voice}</option>
+              {v.options.map(function (o) { return <option key={o.id} value={o.id}>{o.name}{o.quality ? ' · ' + o.quality : ''}{o.robotic ? ' · novelty' : ''}</option>; })}
+            </select>
+            <button className="speak" aria-label={'Test ' + v.name + ' voice'} onClick={function () { LQ.speech.sample(v.lang); }}><Icon name="speaker" /></button>
+          </div>;
+        })}</div>
+        <span className="small muted">Voices marked Premium or Enhanced sound the most natural. On iPhone you can download them free in Settings › Accessibility › Spoken Content › Voices.</span></div>
+    </div>;
+  }
+
   function ParentArea(props) {
     var tabS = useState('learners'), tab = tabS[0], setTab = tabS[1];
     var s = props.state;
-    var TABS = [['learners', 'Learners', 'family'], ['week', 'This week', 'review'], ['words', 'Words', 'edit'], ['backup', 'Settings', 'parent']];
+    var TABS = [['learners', 'Learners', 'family'], ['week', 'This week', 'review'], ['words', 'Words', 'edit'], ['sound', 'Sound', 'speaker'], ['backup', 'Backup', 'parent']];
     var body = null;
     if (tab === 'learners') body = <LearnersTab state={s} onEdit={props.onEdit} onAdd={props.onAdd} onDelete={props.onDelete} />;
     if (tab === 'week') body = <WeekTab state={s} />;
     if (tab === 'words') body = <WordsTab state={s} onAdd={props.onAddWord} onDelete={props.onDeleteWord} />;
+    if (tab === 'sound') body = <SoundTab state={s} onSettings={props.onSettings} />;
     if (tab === 'backup') body = <BackupTab state={s} onBackedUp={props.onBackedUp} onRestore={props.onRestore} onSettings={props.onSettings} />;
     return <div className="parent grow" style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
       <div className="topbar"><button className="icon-btn" aria-label="Close parent area" onClick={props.onClose}><Icon name="close" /></button><h3>Parent area</h3></div>

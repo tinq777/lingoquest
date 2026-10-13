@@ -10,16 +10,65 @@
     try { return s ? s.getVoices() || [] : []; } catch (e) { return []; }
   }
 
-  /* Best voice for a language code: exact match, then same language. */
-  function pickVoice(code) {
-    var list = voices(), want = code.toLowerCase(), base = want.split('-')[0];
-    var norm = function (v) { return String(v.lang || '').toLowerCase().replace('_', '-'); };
-    return list.filter(function (v) { return norm(v) === want; })[0] ||
-      list.filter(function (v) { return norm(v).split('-')[0] === base; })[0] || null;
+  /* Phones ship joke and retro voices alongside the natural ones (iPhone lists
+     "Zarvox", "Bells", "Eddy", "Grandpa"…). Score voices so the most natural one
+     wins: downloaded Premium/Enhanced voices first, novelty voices never. */
+  var ROBOTIC = ['albert', 'bad news', 'bahh', 'bells', 'boing', 'bubbles', 'cellos', 'good news', 'jester', 'organ',
+    'superstar', 'trinoids', 'whisper', 'wobble', 'zarvox', 'junior', 'ralph', 'fred', 'kathy', 'hysterical', 'deranged',
+    'pipe organ', 'eddy', 'flo', 'grandma', 'grandpa', 'reed', 'rocko', 'sandy', 'shelley'];
+  var NATURAL = ['karen', 'lee', 'matilda', 'catherine', 'gordon', 'daniel', 'serena', 'kate', 'arthur', 'martha',
+    'samantha', 'ava', 'allison', 'nicky', 'zoe', 'evan', 'tom', 'susan', 'google', 'microsoft', 'natural', 'neural',
+    'tingting', 'ting-ting', 'lili', 'yu-shu', 'monica', 'mónica', 'paulina', 'jorge', 'linh', 'maged', 'majed', 'tarik', 'laila', 'mariam'];
+  function vname(v) { return String(v.name || '').toLowerCase(); }
+  function isRobotic(v) {
+    var n = vname(v).replace(/\s*\(.*\)\s*$/, '');
+    var uri = String(v.voiceURI || '').toLowerCase();
+    return ROBOTIC.indexOf(n) >= 0 || uri.indexOf('eloquence') >= 0;
+  }
+  function score(v) {
+    var n = vname(v), uri = String(v.voiceURI || '').toLowerCase(), sc = 0;
+    if (isRobotic(v)) sc -= 1000;
+    if (/premium/.test(n + uri)) sc += 300;
+    if (/enhanced/.test(n + uri)) sc += 200;
+    if (/siri/.test(n + uri)) sc += 150;
+    if (NATURAL.some(function (w) { return n.indexOf(w) === 0 || n.indexOf(w) >= 0 && (w === 'google' || w === 'microsoft' || w === 'natural' || w === 'neural'); })) sc += 100;
+    if (/compact/.test(uri)) sc -= 20;
+    if (v.default) sc += 10;
+    if (v.localService) sc += 5;
+    return sc;
+  }
+  var norm = function (v) { return String(v.lang || '').toLowerCase().replace('_', '-'); };
+  var preferred = {};   // language key -> voiceURI or name the family chose
+  function setPreferred(map) { preferred = Object.assign({}, map || {}); }
+
+  /* All voices for a language code, best first: exact region first, then any region. */
+  function voicesFor(code) {
+    var want = code.toLowerCase(), base = want.split('-')[0];
+    var list = voices().filter(function (v) { return norm(v).split('-')[0] === base; });
+    return list.slice().sort(function (a, b) {
+      var ra = norm(a) === want ? 1 : 0, rb = norm(b) === want ? 1 : 0;
+      return (score(b) + rb * 50) - (score(a) + ra * 50);
+    });
+  }
+  function idOf(v) { return v ? (v.voiceURI || v.name) : null; }
+  /* key: 'en' or a language id; uses the family's choice when that voice is on this device. */
+  function pickVoice(code, key) {
+    var list = voicesFor(code);
+    var want = preferred[key || code];
+    if (want) { var hit = list.filter(function (v) { return idOf(v) === want; })[0]; if (hit) return hit; }
+    return list[0] || null;
   }
 
   /* English uses an Australian voice when the device has one. */
-  function englishVoice() { return pickVoice('en-AU') || pickVoice('en-GB') || pickVoice('en-US') || pickVoice('en'); }
+  function englishVoice() {
+    var all = voicesFor('en-AU');
+    var want = preferred.en;
+    if (want) { var hit = all.filter(function (v) { return idOf(v) === want; })[0]; if (hit) return hit; }
+    // Prefer a natural Australian voice, then a natural British or American one.
+    var au = all.filter(function (v) { return norm(v) === 'en-au' && !isRobotic(v); })[0];
+    var other = all.filter(function (v) { return !isRobotic(v); })[0];
+    return au && score(au) >= (other ? score(other) - 150 : 0) ? au : (other || au || all[0] || null);
+  }
 
   function utterance(text, lang, opts) {
     var u = new window.SpeechSynthesisUtterance(text);
@@ -30,8 +79,8 @@
     } else {
       var L = LQ.LANGUAGES[lang];
       u.lang = L ? (L.voice === 'es' ? 'es-ES' : L.voice) : lang;
-      var v = L ? pickVoice(L.voice) : null;
-      if (v) u.voice = v;
+      var v = L ? pickVoice(L.voice, L.id) : null;
+      if (v) { u.voice = v; u.lang = v.lang; }
       u.rate = opts.rate || 0.85;
     }
     return u;
@@ -61,11 +110,16 @@
   /* Which languages have a device voice. Voices load asynchronously, so the
      report is refreshed when the browser says the list changed. */
   function report() {
-    return LQ.langList().map(function (L) {
-      var v = pickVoice(L.voice);
-      return { lang: L.id, name: L.name, ok: !!v, voice: v ? v.name : null };
+    var rows = [{ lang: 'en', name: 'English (instructions)', code: 'en-AU' }].concat(LQ.langList().map(function (L) { return { lang: L.id, name: L.name, code: L.voice }; }));
+    return rows.map(function (r) {
+      var v = r.lang === 'en' ? englishVoice() : pickVoice(r.code, r.lang);
+      var options = voicesFor(r.code).map(function (x) { return { id: idOf(x), name: x.name, lang: x.lang, robotic: isRobotic(x), quality: /premium/i.test(x.name + x.voiceURI) ? 'Premium' : /enhanced/i.test(x.name + x.voiceURI) ? 'Enhanced' : '' }; });
+      return { lang: r.lang, name: r.name, ok: !!v, voice: v ? v.name : null, voiceId: idOf(v), options: options, chosen: preferred[r.lang] || '' };
     });
   }
+  /* Say a short sample in a language, for the voice picker. */
+  var SAMPLE = { en: 'Hello! Let\'s learn some new words.', zh: '你好！我们一起学习吧。', es: '¡Hola! Vamos a aprender.', vi: 'Xin chào! Chúng ta cùng học nhé.', ar: 'مرحبا! هيا نتعلم معا.' };
+  function sample(lang) { return sayParts([{ text: SAMPLE[lang] || SAMPLE.en, lang: lang }]); }
   function onVoices(cb) {
     var s = synth();
     if (!s) return function () {};
@@ -119,5 +173,5 @@
     }
   } catch (e) { /* ignore */ }
 
-  LQ.speech = { unlock: unlock, speak: speak, sayParts: sayParts, englishVoice: englishVoice, stop: stop, pickVoice: pickVoice, report: report, onVoices: onVoices, canListen: canListen, listen: listen };
+  LQ.speech = { unlock: unlock, speak: speak, sayParts: sayParts, englishVoice: englishVoice, voicesFor: voicesFor, isRobotic: isRobotic, setPreferred: setPreferred, sample: sample, stop: stop, pickVoice: pickVoice, report: report, onVoices: onVoices, canListen: canListen, listen: listen };
 })(typeof window !== 'undefined' ? (window.LQ = window.LQ || {}) : (globalThis.LQ = globalThis.LQ || {}));

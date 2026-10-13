@@ -304,3 +304,7 @@ rt.hide { visibility: hidden; }
 
 .seg.seg-4 button { font-size: 12.5px; padding: 8px 2px; letter-spacing: -.1px; }
 .bubble .r.ar-r, .reply .r.ar-r { text-align: right; }
+
+/* Voice picker */
+.voice-row { display: grid; grid-template-columns: 92px minmax(0, 1fr) 44px; gap: 8px; align-items: center; }
+.voice-row .input { min-height: 40px; padding: 6px 8px; font-size: 14px; }

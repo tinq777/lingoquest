@@ -43,6 +43,6 @@ npm test
 
 ## Notes
 
-- Audio uses each phone's built-in voices. The app warns once if a language has no voice; Parent area › Backup lists the voices it found.
+- Audio uses each phone's built-in voices. The app picks the most natural voice for each language (downloaded Premium/Enhanced voices first, novelty voices such as Eddy or Zarvox never) and warns once if a language has no voice. Parent area › Sound lets you choose and test a voice per language.
 - Speech recognition ("say it") works in Chrome and Safari. Pre-readers never see it.
 - Backups are JSON files. Restore offers Merge (keep the best progress) or Replace.

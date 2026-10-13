@@ -148,6 +148,7 @@
     var st = useState(function () { return LQ.store.load(); }), state = st[0], setState = st[1];
     var stateRef = useRef(state); stateRef.current = state;
     LQ.sfx.setEnabled(state.settings.sfx !== false);
+    LQ.speech.setPreferred(state.settings.voices || {});
     var first = state.profiles.length === 0 ? { name: 'welcome' } : state.profiles.length === 1 ? { name: 'home', id: state.profiles[0].id } : { name: 'picker' };
     var scS = useState(first), screen = scS[0], setScreen = scS[1];
     var gateS = useState(null), gate = gateS[0], setGate = gateS[1];
