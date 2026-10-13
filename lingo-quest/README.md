@@ -33,7 +33,7 @@ To update: upload the folder again as a new deployment. Bump `VERSION` in `sw.js
 
 ## Tests
 
-The `lingo-quest-tests` folder sits beside this one (keep it out of the Cloudflare upload). `unit.test.js` covers content integrity, tones, questions, spaced repetition, storage and backups; `ui.test.js` runs full flows in jsdom.
+The `lingo-quest-tests` folder sits beside this one (keep it out of the Cloudflare upload). `unit.test.js` covers content integrity, tones, questions, spaced repetition, storage and backups; `ui.test.js` runs full flows in jsdom; `every-unit.test.js` plays every unit in every language for every learning style and checks each screen.
 
 ```
 cd lingo-quest-tests

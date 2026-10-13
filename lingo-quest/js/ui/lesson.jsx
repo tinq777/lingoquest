@@ -28,12 +28,13 @@
     var fbS = useState(''), fb = fbS[0], setFb = fbS[1];
     var typedS = useState(''), typed = typedS[0], setTyped = typedS[1];
     var noteS = useState(''), note = noteS[0], setNote = noteS[1];
+    var hintS = useState(false), hint = hintS[0], setHint = hintS[1];
     var attempts = useRef(1);
     var finished = useRef(false);
 
     useEffect(function () {
       attempts.current = 1; finished.current = false;
-      setWrong({}); setDone(false); setSel(null); setFb(''); setTyped(''); setNote('');
+      setWrong({}); setDone(false); setSel(null); setFb(''); setTyped(''); setNote(''); setHint(false);
       if (q.kind === 'listen-pic' || q.kind === 'listen-type' || q.kind === 'tone') {
         var t = setTimeout(function () { say(w); }, 250);
         return function () { clearTimeout(t); };
@@ -56,6 +57,8 @@
       var m = Object.assign({}, wrong); m[key] = true; setWrong(m);
       setFb(pick(TRY));
     }
+    /* A grown-up hint shows the English word; it counts as one miss. */
+    function showHint() { if (hint || done) return; setHint(true); attempts.current += 1; }
     function choose(key) {
       if (done || wrong[key]) return;
       if (key === q.answer) right(key); else miss(key);
@@ -63,16 +66,28 @@
 
     var title, prompt, body;
     var opts = q.options || [];
+    function picOpt(o, label) {
+      return <button key={o.key} data-key={o.key} className={optClass(o.key) + ' picopt'} aria-label={label || o.word.en} onClick={function () { choose(o.key); }}>
+        <Pic svg={o.word.pic} /><span className="opt-label">{o.word.en}</span></button>;
+    }
     function optClass(key) { return 'opt' + (done && key === q.answer ? ' right pop' : '') + (wrong[key] ? ' wrong shake' : '') + (sel === key && !done ? ' sel' : ''); }
 
     if (q.kind === 'listen-pic') {
       title = band === 'pre' ? null : 'Tap what you hear';
-      prompt = <button className="big-speaker" aria-label="Play the word again" onClick={function () { say(w); }}><Icon name="speaker" /></button>;
+      prompt = <div className="list" style={{ alignItems: 'center', gap: 6 }}>
+        <button className="big-speaker" aria-label="Play the word again" onClick={function () { say(w); }}><Icon name="speaker" /></button>
+        {hint ? <div className="hint-line">Listen for: <b>{w.en}</b></div>
+          : <button className="btn ghost sm hint-btn" onClick={showHint}>Hint for grown-ups</button>}
+      </div>;
       body = <div className={'options pics' + (opts.length === 3 ? ' three' : '')}>
-        {opts.map(function (o) { return <button key={o.key} data-key={o.key} className={optClass(o.key)} aria-label={band === 'pre' ? 'Picture' : o.word.en} onClick={function () { choose(o.key); }}><Pic svg={o.word.pic} /></button>; })}
+        {opts.map(function (o) { return picOpt(o); })}
       </div>;
     } else if (q.kind === 'pic-sound') {
-      prompt = <div className="prompt-pic"><Pic svg={w.pic} /></div>;
+      prompt = <div className="list" style={{ alignItems: 'center', gap: 2 }}>
+        <div className="prompt-pic"><Pic svg={w.pic} label={w.en} /></div>
+        <span className="en">{w.en}</span>
+        <span className="small muted">Tap A and B, then pick the one that says it</span>
+      </div>;
       body = <div className="list grow">
         <div className="options pics" style={{ gridTemplateColumns: '1fr 1fr', flex: 'none', height: '34%' }}>
           {opts.map(function (o, i) {
@@ -87,7 +102,7 @@
       title = 'Which picture?';
       prompt = <div className="row" style={{ justifyContent: 'center' }}><WordText word={w} size={44} mastered={mastered} /><SpeakBtn text={w.t} lang={w.lang} /></div>;
       body = <div className="options pics">
-        {opts.map(function (o) { return <button key={o.key} data-key={o.key} className={optClass(o.key)} aria-label={o.word.en} onClick={function () { choose(o.key); }}><Pic svg={o.word.pic} /></button>; })}
+        {opts.map(function (o) { return picOpt(o); })}
       </div>;
     } else if (q.kind === 'pic-word') {
       title = 'Which word?';
@@ -153,6 +168,7 @@
       {body}
       <div className={'feedback ' + (done ? 'good' : fb ? 'try' : '')} aria-live="polite">
         {done ? <Icon name="check" /> : null}{fb}
+        {done ? <span className="fb-word">{band === 'pre' ? w.en : w.t + ' · ' + w.en}</span> : null}
         {done ? <button className="btn ghost sm" onClick={finish}>Next</button> : null}
       </div>
     </div>;
@@ -179,7 +195,7 @@
       <div className="learn-card">
         <button className="learn-pic" style={{ border: 0, background: 'transparent', padding: 0 }} aria-label={'Hear ' + w.en} onClick={function () { say(w); }}><Pic svg={w.pic} /></button>
         {band !== 'pre' ? <WordText word={w} size={band === 'adult' ? 44 : 52} /> : null}
-        {band !== 'pre' ? <div className="en">{w.en}</div> : null}
+        <div className={'en' + (band === 'pre' ? ' en-big' : '')}>{w.en}</div>
         {showHint ? <div className="hint">{w.hint}</div> : null}
         <div className="row">
           <button className="speak" style={{ width: 56, height: 56 }} aria-label="Play again" onClick={function () { say(w); }}><Icon name="speaker" /></button>
@@ -243,16 +259,17 @@
     var visible = lines.slice(0, n);
     return <div className="screen">
       <div className="row between">
-        <h3>{band === 'pre' ? 'Listen' : 'Chat'}</h3>
+        <h3>{band === 'pre' ? 'Listen to the chat' : 'Chat'}</h3>
         {band === 'adult' ? <button className="btn ghost sm" onClick={function () { setShowEn(!showEn); }}>{showEn ? 'Hide English' : 'Show English'}</button> : null}
       </div>
+      {band === 'pre' ? <p className="small muted">Tap a bubble to hear it again.</p> : null}
       <div className="chat">
         {visible.map(function (line, i) {
           var me = line.s === 'you';
           return <div key={i} className={'bubble-row' + (me ? ' me' : '')}>
             <ui.Avatar profile={me ? props.profile : { avatar: lang === 'zh' ? 'panda' : lang === 'es' ? 'fox' : 'owl', colour: '#d3e2dc' }} size={40} />
             <button className={'bubble pop' + (band === 'pre' ? ' audio' : '')} aria-label="Play line" onClick={function () { LQ.speech.speak(line.t, lang); }}>
-              {band === 'pre' ? <Icon name="speaker" /> : lineText(line, lang, band, showEn)}
+              {band === 'pre' ? <React.Fragment><Icon name="speaker" /><span className="e">{line.en}</span></React.Fragment> : lineText(line, lang, band, showEn)}
             </button>
           </div>;
         })}
