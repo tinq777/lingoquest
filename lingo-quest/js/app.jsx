@@ -139,7 +139,7 @@
   function VoiceWarning(props) {
     return <ui.Sheet title="A voice is missing" onClose={props.onClose}>
       <p style={{ textAlign: 'center' }}>This device has no {props.names.join(' or ')} voice, so words in {props.names.length > 1 ? 'those languages' : 'that language'} will be silent.</p>
-      <p className="small muted" style={{ textAlign: 'center' }}>Add one in your device's language or speech settings, then reopen Lingo Quest. Parent area › Backup shows which voices are found.</p>
+      <p className="small muted" style={{ textAlign: 'center' }}>Add one in your device's language or speech settings, then reopen Lingo Quest. Parent area › Sound shows which voices are found.</p>
       <button className="btn primary block" onClick={props.onClose}>OK</button>
     </ui.Sheet>;
   }
@@ -157,15 +157,69 @@
     var restoreRef = useRef(null);
     var reS = useState(null), restoreError = reS[0], setRestoreError = reS[1];
     var warned = useRef({});
+    var joinS = useState(false), joining = joinS[0], setJoining = joinS[1];
 
-    function update(fn) {
+    function update(fn, opts) {
       var next = clone(stateRef.current);
       fn(next);
       stateRef.current = next;
-      LQ.store.save(next);
+      LQ.store.save(next, opts);
       setState(next);
+      if (!(opts && (opts.fromSync || opts.quiet))) scheduleSync(20000);
       return next;
     }
+
+    /* ---------- Family sync ---------- */
+    var syncS = useState({ busy: false, error: null }), syncInfo = syncS[0], setSyncInfo = syncS[1];
+    var syncBusy = useRef(false), syncTimer = useRef(null);
+    function syncCode() { var c = stateRef.current.settings.sync; return c && c.code; }
+    function scheduleSync(ms) {
+      if (!syncCode()) return;
+      clearTimeout(syncTimer.current);
+      syncTimer.current = setTimeout(function () { runSync(); }, ms);
+    }
+    /* Pull, merge, push. Changes made while the network call was running are
+       merged in afterwards and trigger another round. */
+    function runSync(opts) {
+      var code = (opts && opts.code) || syncCode();
+      if (!code || !LQ.sync) return Promise.resolve(null);
+      if (syncBusy.current) { scheduleSync(3000); return Promise.resolve(null); }
+      syncBusy.current = true; clearTimeout(syncTimer.current);
+      setSyncInfo({ busy: true, error: null });
+      var base = opts && opts.replace ? Object.assign(clone(stateRef.current), { profiles: [], custom: [], removed: { p: {}, c: {} } }) : stateRef.current;
+      return LQ.sync.syncOnce(base, code, opts).then(function (res) {
+        var sent = LQ.store.syncPayload(res.state);
+        var later = opts && opts.replace ? { state: res.state } : LQ.store.syncMerge(stateRef.current, sent);
+        var dirty = JSON.stringify(LQ.store.syncPayload(later.state)) !== JSON.stringify(sent);
+        update(function (s) {
+          s.profiles = clone(later.state.profiles); s.custom = clone(later.state.custom); s.removed = clone(later.state.removed);
+          s.settings.sync = { code: code, rev: res.rev, lastSync: Date.now() };
+        }, { fromSync: true });
+        syncBusy.current = false;
+        setSyncInfo({ busy: false, error: null });
+        if (dirty) scheduleSync(3000);
+        return res;
+      }).catch(function (err) {
+        syncBusy.current = false;
+        setSyncInfo({ busy: false, error: err.message || String(err), kind: err.kind });
+        throw err;
+      });
+    }
+    useEffect(function () {
+      var quietly = function () { runSync().catch(function () {}); };
+      var t = setTimeout(quietly, 800);
+      var onVis = function () { if (document.visibilityState === 'visible') quietly(); };
+      document.addEventListener('visibilitychange', onVis);
+      window.addEventListener('online', quietly);
+      return function () { clearTimeout(t); clearTimeout(syncTimer.current); document.removeEventListener('visibilitychange', onVis); window.removeEventListener('online', quietly); };
+    }, []);
+    var syncApi = {
+      info: syncInfo,
+      start: function () { var code = LQ.sync.newCode(); return runSync({ code: code }); },
+      join: function (code, mode) { return runSync({ code: code, mustExist: true, matchNames: mode !== 'replace', replace: mode === 'replace' }); },
+      now: function () { return runSync(); },
+      leave: function () { clearTimeout(syncTimer.current); update(function (s) { delete s.settings.sync; }, { quiet: true }); setSyncInfo({ busy: false, error: null }); }
+    };
     function findP(s, id) { return s.profiles.filter(function (p) { return p.id === id; })[0]; }
     var profile = screen.id ? findP(state, screen.id) : null;
 
@@ -223,7 +277,8 @@
 
     var view = null;
     if (screen.name === 'welcome') {
-      view = <LQ.home.Welcome error={restoreError} onStart={function () { setScreen({ name: 'form', mode: 'add', back: { name: 'welcome' } }); }} onImport={openRestore} />;
+      view = <LQ.home.Welcome error={restoreError} onStart={function () { setScreen({ name: 'form', mode: 'add', back: { name: 'welcome' } }); }} onImport={openRestore}
+        onJoin={function () { setJoining(true); }} />;
     } else if (screen.name === 'picker') {
       view = <LQ.home.Picker state={state} onPick={function (id) { setScreen({ name: 'home', id: id }); }}
         onAdd={function () { setGate({ what: 'adding a learner', next: { name: 'form', mode: 'add', back: { name: 'picker' } } }); }} />;
@@ -273,9 +328,10 @@
         onClose={function () { setScreen(screen.back && findP(state, screen.back.id) ? screen.back : (state.profiles.length ? { name: 'picker' } : { name: 'welcome' })); }}
         onEdit={function (id) { setScreen({ name: 'form', mode: 'edit', id: id, back: screen }); }}
         onAdd={function () { setScreen({ name: 'form', mode: 'add', back: screen }); }}
-        onDelete={function (id) { update(function (s) { s.profiles = s.profiles.filter(function (p) { return p.id !== id; }); }); }}
+        onDelete={function (id) { update(function (s) { s.profiles = s.profiles.filter(function (p) { return p.id !== id; }); LQ.store.markRemoved(s, 'p', id); }); }}
         onAddWord={function (c) { update(function (s) { var n = LQ.store.normalizeCustom(Object.assign({ id: LQ.store.uid('c') }, c)); if (n) s.custom.push(n); }); }}
-        onDeleteWord={function (id) { update(function (s) { s.custom = s.custom.filter(function (c) { return c.id !== id; }); }); }}
+        onDeleteWord={function (id) { update(function (s) { s.custom = s.custom.filter(function (c) { return c.id !== id; }); LQ.store.markRemoved(s, 'c', id); }); }}
+        sync={syncApi}
         onBackedUp={function () { update(function (s) { s.settings.lastBackup = Date.now(); }); }}
         onSettings={function (o) { update(function (s) { Object.assign(s.settings, o); }); }}
         onRestore={function (data, mode) {
@@ -293,6 +349,8 @@
       {gate ? <ui.ParentGate what={gate.what} onCancel={function () { setGate(null); }} onPass={function () { setScreen(gate.next); setGate(null); }} /> : null}
       {coopSetup ? <CoopSetup state={state} onClose={function () { setCoopSetup(false); }}
         onStart={function (ids, lang) { setCoopSetup(false); setScreen({ name: 'coop', players: ids, lang: lang, back: Object.assign({}, screen, { tab: 'family' }) }); }} /> : null}
+      {joining ? <LQ.parent.JoinSheet state={state} sync={syncApi} onClose={function () { setJoining(false); }}
+        onJoined={function () { setJoining(false); var n = stateRef.current.profiles.length; setScreen(n === 1 ? { name: 'home', id: stateRef.current.profiles[0].id } : n ? { name: 'picker' } : { name: 'welcome' }); }} /> : null}
       {voiceWarn ? <VoiceWarning names={voiceWarn} onClose={function () { setVoiceWarn(null); }} /> : null}
       <input ref={restoreRef} type="file" accept="application/json,.json" style={{ display: 'none' }} onChange={onRestoreFile} aria-label="Backup file" />
     </div>;

@@ -10,6 +10,7 @@
       <div className="hero-title">Lingo Quest</div>
       <p className="muted" style={{ maxWidth: 300 }}>Learn <span className="zh">中文</span>, Spanish, Vietnamese and Arabic together, a few minutes a day.</p>
       <button className="btn primary block" onClick={props.onStart}>Set up the first learner</button>
+      {props.onJoin ? <button className="btn ghost block" onClick={props.onJoin}>Join my family with a sync code</button> : null}
       {props.onImport ? <button className="btn ghost block" onClick={props.onImport}>Restore from a backup</button> : null}
       {props.error ? <div className="notice bad" role="status">{props.error}</div> : null}
     </div>;

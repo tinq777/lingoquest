@@ -10,6 +10,20 @@ A free, offline family app for learning Chinese first, with Spanish, Northern Vi
 
 To update: upload the folder again as a new deployment. Bump `VERSION` in `sw.js` first so installed phones fetch the new files.
 
+## Family sync (one-time setup)
+
+Sync keeps learners, stars and progress the same on every device. It uses a small Cloudflare Pages Function (`functions/api/sync.js`) and a free KV store. There are no accounts: devices share a 12-character family code, and the code is stored only as a hash.
+
+1. **Put the `functions` folder at the top of your GitHub repo**, next to the `lingo-quest` folder (not inside it). Cloudflare looks for it there even though the build output directory is `lingo-quest`.
+2. Cloudflare dashboard → **Storage & databases → Workers KV → Create**. Name it `lingo-quest-sync`.
+3. Workers & Pages → your Lingo Quest project → **Settings → Bindings → Add → KV namespace**. Variable name: `LQ_SYNC` (exactly). KV namespace: `lingo-quest-sync`. Save.
+4. Deployments → **Retry deployment** on the latest one (bindings only apply to new deployments).
+5. In the app: Parent area › Sync › **Start family sync** on the device with your learners. On every other device: Parent area › Sync › **Join with a code** (or "Join my family with a sync code" on a fresh install).
+
+Sync runs when the app opens, when it comes back on screen, and about 20 seconds after playing. **Sync now** forces it. Merging keeps the best progress from every device; a learner deleted on one device is deleted everywhere. Voices, sounds and reminders stay per device. If the app says "Sync is not set up on the website yet", steps 1–4 are not finished.
+
+The free Cloudflare plan allows 100,000 reads and 1,000 saves a day, far more than a family uses.
+
 ## Files
 
 | Path | What it holds |
@@ -24,6 +38,8 @@ To update: upload the folder again as a new deployment. Bump `VERSION` in `sw.js
 | `js/core/storage.js` | State, profiles (max 4), streaks, backup export, merge and replace |
 | `js/core/questions.js` | Question types per age band, typed-answer checking, stars |
 | `js/core/speech.js` | Device voices and optional "say it" practice |
+| `js/core/sync.js` | Family sync client: codes, pull, merge, push |
+| `../functions/api/sync.js` | The sync endpoint (Cloudflare Pages Function, lives at the repo root) |
 | `js/ui/*.jsx`, `js/app.jsx` | Screens |
 | `vendor/` | React 18.3.1 and Babel standalone 7, so nothing loads from a CDN |
 | `sw.js`, `manifest.webmanifest`, `icons/` | Installable, offline PWA |
@@ -35,7 +51,7 @@ To update: upload the folder again as a new deployment. Bump `VERSION` in `sw.js
 
 ## Tests
 
-The `lingo-quest-tests` folder sits beside this one (keep it out of the Cloudflare upload). `unit.test.js` covers content integrity, tones, questions, spaced repetition, storage and backups; `ui.test.js` runs full flows in jsdom; `every-unit.test.js` plays every unit in every language for every learning style and checks each screen.
+The `lingo-quest-tests` folder sits beside this one (keep it out of the Cloudflare upload). `unit.test.js` covers content integrity, tones, questions, spaced repetition, storage and backups; `ui.test.js` runs full flows in jsdom; `every-unit.test.js` plays every unit in every language for every learning style and checks each screen; `sync.test.js` runs the sync function against an in-memory KV store and syncs three devices through the app.
 
 ```
 cd lingo-quest-tests

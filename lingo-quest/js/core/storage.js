@@ -13,7 +13,7 @@
   function uid(prefix) { return (prefix || 'p') + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 
   function defaultState() {
-    return { schema: SCHEMA, profiles: [], custom: [], settings: { backupReminder: true, reminderDays: 30, lastBackup: null, sfx: true } };
+    return { schema: SCHEMA, profiles: [], custom: [], removed: { p: {}, c: {} }, settings: { backupReminder: true, reminderDays: 30, lastBackup: null, sfx: true } };
   }
 
   function normalizeProfile(p) {
@@ -27,13 +27,23 @@
       coins: Math.max(0, Number(p.coins) || 0), stars: Object.assign({}, p.stars || {}),
       stickers: Array.isArray(p.stickers) ? p.stickers.slice() : [], srs: Object.assign({}, p.srs || {}),
       days: Array.isArray(p.days) ? p.days.filter(function (d) { return /^\d{4}-\d{2}-\d{2}$/.test(d); }).sort().slice(-90) : [],
-      createdAt: Number(p.createdAt) || Date.now()
+      createdAt: Number(p.createdAt) || Date.now(), editedAt: Number(p.editedAt) || Number(p.createdAt) || 0
     };
   }
 
   function normalizeCustom(c) {
     if (!c || !LQ.LANGUAGES[c.lang] || !LQ.unitById(c.unit) || !c.t || !c.en) return null;
     return { id: String(c.id || uid('c')), lang: c.lang, unit: c.unit, en: String(c.en).slice(0, 30), t: String(c.t).slice(0, 40), r: c.r ? String(c.r).slice(0, 60) : null };
+  }
+
+  /* Deleted learners and words, kept so sync does not bring them back. */
+  function normalizeRemoved(r) {
+    var out = { p: {}, c: {} };
+    ['p', 'c'].forEach(function (k) {
+      var src = r && r[k] && typeof r[k] === 'object' ? r[k] : {};
+      Object.keys(src).slice(0, 500).forEach(function (id) { var t = Number(src[id]); if (t > 0) out[k][id] = t; });
+    });
+    return out;
   }
 
   /* Bring any saved or imported data up to the current schema. */
@@ -46,6 +56,7 @@
       schema: SCHEMA,
       profiles: (Array.isArray(data.profiles) ? data.profiles : []).slice(0, 12).map(normalizeProfile),
       custom: (Array.isArray(data.custom) ? data.custom : []).map(normalizeCustom).filter(Boolean),
+      removed: normalizeRemoved(data.removed),
       settings: Object.assign({}, base.settings, data.settings || {})
     };
     return out;
@@ -57,11 +68,23 @@
       if (!raw) return memory || defaultState();
       var s = migrate(JSON.parse(raw));
       s.profiles = s.profiles.slice(0, MAX_PROFILES);
+      remember(s);
       return s;
     } catch (e) { return memory || defaultState(); }
   }
 
-  function save(state) {
+  /* Name, picture, colour, style and languages are "settings" of a learner.
+     When they change, editedAt moves on so sync knows which version is newer. */
+  var sigs = {};
+  function sigOf(p) { return JSON.stringify([p.name, p.avatar, p.colour, p.band, p.langs]); }
+  function remember(state) { sigs = {}; (state.profiles || []).forEach(function (p) { sigs[p.id] = sigOf(p); }); }
+
+  function save(state, opts) {
+    if (!(opts && opts.fromSync)) {
+      var now = Date.now();
+      (state.profiles || []).forEach(function (p) { if (sigs[p.id] && sigs[p.id] !== sigOf(p)) p.editedAt = now; });
+    }
+    remember(state);
     memory = state;
     try { window.localStorage.setItem(KEY, JSON.stringify(state)); return true; } catch (e) { return false; }
   }
@@ -163,6 +186,13 @@
     }));
   }
 
+  function unremove(removed, profiles, custom) {
+    var r = normalizeRemoved(removed);
+    profiles.forEach(function (p) { delete r.p[p.id]; });
+    custom.forEach(function (c) { delete r.c[c.id]; });
+    return r;
+  }
+
   /* Returns { state, added, updated, skipped } without touching the input. */
   function mergeBackup(state, data) {
     var profiles = state.profiles.map(function (p) { return normalizeProfile(p); });
@@ -175,16 +205,69 @@
     });
     var custom = state.custom.slice();
     data.custom.forEach(function (c) { if (!custom.some(function (x) { return x.id === c.id; })) custom.push(c); });
-    return { state: Object.assign({}, state, { profiles: profiles, custom: custom }), added: added, updated: updated, skipped: skipped };
+    return { state: Object.assign({}, state, { profiles: profiles, custom: custom, removed: unremove(state.removed, profiles, custom) }), added: added, updated: updated, skipped: skipped };
   }
 
   function replaceBackup(state, data) {
     var profiles = data.profiles.slice(0, MAX_PROFILES);
     var skipped = data.profiles.slice(MAX_PROFILES).map(function (p) { return p.name; });
     return {
-      state: Object.assign({}, state, { profiles: profiles, custom: data.custom.slice(), settings: Object.assign({}, state.settings, data.settings || {}) }),
+      state: Object.assign({}, state, { profiles: profiles, custom: data.custom.slice(), removed: unremove(state.removed, profiles, data.custom), settings: Object.assign({}, state.settings, data.settings || {}) }),
       added: profiles.map(function (p) { return p.name; }), updated: [], skipped: skipped
     };
+  }
+
+  /* ---------- Family sync ---------- */
+
+  /* What goes to the cloud: learners, own words and deletions. Device settings
+     (voices, sounds, reminders, the sync code) stay on each device. */
+  function syncPayload(state) {
+    return { app: 'lingo-quest', schema: SCHEMA, profiles: state.profiles, custom: state.custom, removed: normalizeRemoved(state.removed) };
+  }
+
+  function markRemoved(state, kind, id, now) {
+    state.removed = normalizeRemoved(state.removed);
+    state.removed[kind][id] = now || Date.now();
+    return state;
+  }
+
+  /* Combine this device with the family copy. Progress keeps the best of both;
+     a learner's name, picture and languages come from whichever was edited last;
+     anything deleted on any device stays deleted. Pure: returns a new state. */
+  function syncMerge(state, remote, opts) {
+    var r = migrate(remote || {});
+    var removed = normalizeRemoved(state.removed);
+    ['p', 'c'].forEach(function (k) { Object.keys(r.removed[k]).forEach(function (id) { removed[k][id] = Math.max(removed[k][id] || 0, r.removed[k][id]); }); });
+    var local = state.profiles.map(normalizeProfile);
+    // When joining, a learner set up separately on both devices with the same name becomes one learner.
+    if (opts && opts.matchNames) {
+      local = local.map(function (p) {
+        if (r.profiles.some(function (q) { return q.id === p.id; })) return p;
+        var twin = r.profiles.filter(function (q) { return q.name.trim().toLowerCase() === p.name.trim().toLowerCase(); })[0];
+        return twin ? Object.assign({}, p, { id: twin.id, createdAt: twin.createdAt }) : p;
+      });
+    }
+    var byId = {}, order = [];
+    function put(p, fromRemote) {
+      if (removed.p[p.id]) return;
+      var have = byId[p.id];
+      if (!have) { byId[p.id] = p; order.push(p.id); return; }
+      var merged = mergeProfile(have, p);
+      var meta = (p.editedAt || 0) > (have.editedAt || 0) ? p : have;
+      merged.name = meta.name; merged.avatar = meta.avatar; merged.colour = meta.colour; merged.band = meta.band;
+      merged.langs = meta.langs.slice(); merged.editedAt = Math.max(have.editedAt || 0, p.editedAt || 0);
+      var here = fromRemote ? have : p; // the language each device is showing stays its own
+      merged.lang = merged.langs.indexOf(here.lang) >= 0 ? here.lang : merged.langs[0];
+      byId[p.id] = normalizeProfile(merged);
+    }
+    r.profiles.forEach(function (p) { put(p, true); });
+    local.forEach(function (p) { put(p, false); });
+    var profiles = order.map(function (id) { return byId[id]; }).sort(function (a, b) { return a.createdAt - b.createdAt; });
+    var skipped = profiles.slice(MAX_PROFILES).map(function (p) { return p.name; });
+    profiles = profiles.slice(0, MAX_PROFILES);
+    var custom = [], seen = {};
+    r.custom.concat(state.custom).forEach(function (c) { if (!removed.c[c.id] && !seen[c.id]) { seen[c.id] = true; custom.push(c); } });
+    return { state: Object.assign({}, state, { profiles: profiles, custom: custom, removed: removed }), skipped: skipped };
   }
 
   function backupOverdue(state, now) {
@@ -201,6 +284,7 @@
     dayKey: dayKey, addDays: addDays, streak: streak, familyStreak: familyStreak, markPracticed: markPracticed,
     unitUnlocked: unitUnlocked, totalStars: totalStars,
     exportData: exportData, backupFileName: backupFileName, parseBackup: parseBackup,
-    mergeBackup: mergeBackup, replaceBackup: replaceBackup, backupOverdue: backupOverdue
+    mergeBackup: mergeBackup, replaceBackup: replaceBackup, backupOverdue: backupOverdue,
+    syncPayload: syncPayload, syncMerge: syncMerge, markRemoved: markRemoved, normalizeRemoved: normalizeRemoved
   };
 })(typeof window !== 'undefined' ? (window.LQ = window.LQ || {}) : (globalThis.LQ = globalThis.LQ || {}));

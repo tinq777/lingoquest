@@ -31,7 +31,7 @@ function boot(savedState) {
   win.eval(fs.readFileSync(path.join(__dirname, 'node_modules/react/umd/react.development.js'), 'utf8'));
   win.eval(fs.readFileSync(path.join(__dirname, 'node_modules/react-dom/umd/react-dom.development.js'), 'utf8'));
   win.eval('window.LQ = { debug: {}, noAutoMount: true };');
-  ['data/languages', 'data/worlds-3-5', 'data/pictures', 'data/pictures-3-5', 'core/tones', 'core/content', 'core/srs', 'core/storage', 'core/questions', 'core/speech', 'core/sfx']
+  ['data/languages', 'data/worlds-3-5', 'data/pictures', 'data/pictures-3-5', 'core/tones', 'core/content', 'core/srs', 'core/storage', 'core/questions', 'core/speech', 'core/sfx', 'core/sync']
     .forEach(f => win.eval(fs.readFileSync(path.join(APP, 'js', f + '.js'), 'utf8')));
   ['ui/common', 'ui/lesson', 'ui/home', 'ui/parent', 'app'].forEach(f => {
     const src = fs.readFileSync(path.join(APP, 'js', f + '.jsx'), 'utf8');
@@ -251,7 +251,7 @@ test('parent adds and deletes a custom word', async () => {
 });
 
 test('this week shows a row per learner', async () => {
-  await click(tab('This week'), 'week tab');
+  await click(tab('Week'), 'week tab');
   eq($$('.week .nm').length, 4); assert($$('.week i.on').length >= 1);
 });
 

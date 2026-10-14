@@ -1,6 +1,6 @@
 {
   "name": "lingo-quest-tests",
   "private": true,
-  "scripts": { "test": "node unit.test.js && node ui.test.js && node every-unit.test.js" },
+  "scripts": { "test": "node unit.test.js && node ui.test.js && node every-unit.test.js && node sync.test.js" },
   "devDependencies": { "@babel/standalone": "^7.29.0", "jsdom": "^26.0.0", "react": "18.3.1", "react-dom": "18.3.1" }
 }

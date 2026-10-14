@@ -325,3 +325,11 @@ rt.hide { visibility: hidden; }
 .voice-row .input { min-height: 40px; padding: 6px 8px; font-size: 14px; }
 
 .hint-pattern { font-weight: 800; font-size: 22px; letter-spacing: 1px; white-space: pre-wrap; margin-top: 2px; }
+
+/* Family sync */
+.sync-steps { margin: 0; padding-left: 22px; gap: 4px; }
+.code-row { gap: 8px; }
+.sync-code { flex: 1; min-width: 0; text-align: center; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 800; font-size: 22px; letter-spacing: 1px; background: #fff; border: 2px dashed var(--line); border-radius: 12px; padding: 8px 6px; white-space: nowrap; user-select: all; -webkit-user-select: all; }
+.code-input { text-align: center; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-weight: 800; font-size: 22px; letter-spacing: 1px; text-transform: uppercase; }
+.parent .tabs .tab { font-size: 12px; padding: 6px 0; white-space: nowrap; }
+.parent .tabs .tab .ico { width: 24px; height: 24px; }

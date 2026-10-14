@@ -36,6 +36,7 @@
   <script src="js/core/questions.js"></script>
   <script src="js/core/speech.js"></script>
   <script src="js/core/sfx.js"></script>
+  <script src="js/core/sync.js"></script>
 
   <script type="text/babel" data-presets="react" src="js/ui/common.jsx"></script>
   <script type="text/babel" data-presets="react" src="js/ui/lesson.jsx"></script>
@@ -45,7 +46,17 @@
 
   <script>
     if ('serviceWorker' in navigator && location.protocol === 'https:') {
-      window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+      /* When an update installs, the page may have mixed old cached files with
+         new ones. Reload once so every file comes from the same version. */
+      var hadController = !!navigator.serviceWorker.controller, reloaded = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (!hadController || reloaded) return;
+        reloaded = true;
+        location.reload();
+      });
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(function (r) { r.update(); }).catch(function () {});
+      });
     }
   </script>
 </body>

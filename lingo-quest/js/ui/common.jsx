@@ -21,7 +21,8 @@
     parent: <g fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinejoin="round"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4" strokeLinecap="round"/></g>,
     trash: <g fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></g>,
     edit: <g fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></g>,
-    play: <path d="M8 5l11 7-11 7z" fill="currentColor"/>
+    play: <path d="M8 5l11 7-11 7z" fill="currentColor"/>,
+    cloud: <g fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinejoin="round" strokeLinecap="round"><path d="M7 18.5h10.5a4 4 0 0 0 .6-7.95A6 6 0 0 0 6.5 10a4.25 4.25 0 0 0 .5 8.5z"/><path d="M9.5 13.5l2.5-2.5 2.5 2.5M12 11v5"/></g>
   };
 
   function Icon(props) {
